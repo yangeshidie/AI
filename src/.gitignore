@@ -1,3 +1,6 @@
 # ====== secrets / env ======
 .env
 .env.*
+.json
+kb_metadata.json
+
