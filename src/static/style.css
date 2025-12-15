@@ -1,0 +1,148 @@
+/* 保持原有基础样式，新增以下 Markdown 相关样式 */
+
+/* ...原有变量定义... */
+:root {
+    --bg-dark: #1e1e1e;
+    --bg-sidebar: #252526;
+    --bg-input: #3c3c3c;
+    --accent: #007acc;
+    --text-main: #ffffff;
+    --text-muted: #cccccc;
+    --border: #333;
+}
+
+body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; }
+.app-container { display: flex; width: 100%; height: 100%; }
+
+/* 侧边栏样式同前，略 */
+.sidebar { width: 300px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: width 0.3s; flex-shrink: 0; overflow: hidden; }
+.sidebar.collapsed { width: 0; padding: 0; border: none; }
+.sidebar-header { padding: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.tabs { display: flex; border-bottom: 1px solid var(--border); }
+.tab-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px; cursor: pointer; border-bottom: 2px solid transparent; }
+.tab-btn.active { color: white; border-bottom-color: var(--accent); background: rgba(255,255,255,0.05); }
+.panel { display: none; padding: 15px; overflow-y: auto; flex: 1; }
+.panel.active { display: block; }
+.form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+input, select { padding: 8px; background: var(--bg-input); border: 1px solid #555; color: white; border-radius: 4px; }
+.action-btn { padding: 8px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; }
+.action-btn.secondary { background: #444; }
+.history-item { padding: 8px; cursor: pointer; font-size: 0.9em; border-radius: 4px; display: flex; align-items: center; gap: 5px; color: #ccc; }
+.history-item:hover { background: #37373d; color: white; }
+.history-date { font-weight: bold; margin-top: 10px; font-size: 0.9em; color: #888; margin-left: 5px; }
+
+/* 主区域 */
+.main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; /* 防止内容撑开 flex item */ }
+.chat-header { padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; height: 40px; background: var(--bg-dark); }
+.chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.input-area { padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; height: 60px; }
+textarea { flex: 1; background: var(--bg-input); color: white; border: 1px solid var(--border); padding: 10px; resize: none; border-radius: 6px; }
+#sendBtn { width: 50px; background: #28a745; border: none; color: white; border-radius: 6px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+.icon-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; }
+.icon-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+
+/* --- Markdown 内容样式优化 --- */
+.message { padding: 12px 16px; border-radius: 8px; max-width: 85%; line-height: 1.6; word-wrap: break-word; }
+.message.user { background-color: #2b5c87; align-self: flex-end; margin-left: auto; }
+.message.assistant { background-color: #333; align-self: flex-start; }
+.message.system { color: #666; font-size: 0.8em; text-align: center; max-width: 100%; align-self: center; background: transparent; }
+
+/* Markdown 内部元素的样式重置 */
+.message p { margin: 0 0 10px 0; }
+.message p:last-child { margin: 0; }
+.message pre { background: #111; padding: 10px; border-radius: 6px; overflow-x: auto; border: 1px solid #444; }
+.message code { font-family: 'Consolas', monospace; font-size: 0.9em; }
+.message :not(pre) > code { background: rgba(255,255,255,0.15); padding: 2px 4px; border-radius: 3px; }
+.message ul, .message ol { margin: 0 0 10px 0; padding-left: 20px; }
+.message table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }
+.message th, .message td { border: 1px solid #555; padding: 6px; }
+.message th { background: #222; }
+/* --- 保持之前的样式，新增以下部分 --- */
+
+:root {
+    --bg-dark: #1e1e1e;
+    --bg-sidebar: #252526;
+    --bg-input: #3c3c3c;
+    --accent: #007acc;
+    --text-main: #ffffff;
+    --text-muted: #cccccc;
+    --border: #333;
+}
+
+body { margin: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; }
+.app-container { display: flex; width: 100%; height: 100%; }
+
+/* Sidebar & Tabs */
+.sidebar { width: 300px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: width 0.3s; flex-shrink: 0; overflow: hidden; }
+.sidebar.collapsed { width: 0; padding: 0; border: none; }
+.sidebar-header { padding: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.tabs { display: flex; border-bottom: 1px solid var(--border); }
+.tab-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 10px; cursor: pointer; border-bottom: 2px solid transparent; font-size: 0.9em; }
+.tab-btn.active { color: white; border-bottom-color: var(--accent); background: rgba(255,255,255,0.05); }
+
+/* Panels & Forms */
+.panel { display: none; padding: 15px; overflow-y: auto; flex: 1; }
+.panel.active { display: block; }
+.form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+input[type="text"], input[type="password"], select { padding: 8px; background: var(--bg-input); border: 1px solid #555; color: white; border-radius: 4px; outline: none; }
+.action-btn { padding: 8px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; }
+.action-btn:hover { opacity: 0.9; }
+.action-btn.secondary { background: #444; }
+
+/* 知识库上传区样式 (NEW) */
+.knowledge-upload-area {
+    border: 2px dashed #444;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background: rgba(255,255,255,0.02);
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+.knowledge-upload-area input { max-width: 100%; }
+.knowledge-upload-area p { margin: 5px 0; color: #888; font-size: 0.9em; }
+
+/* 提示框样式 (NEW) */
+.info-box {
+    background: #2d2d30;
+    border-left: 3px solid #007acc;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #ddd;
+    margin-top: 10px;
+}
+
+/* History List */
+.history-item { padding: 8px; cursor: pointer; font-size: 0.9em; border-radius: 4px; display: flex; align-items: center; gap: 5px; color: #ccc; }
+.history-item:hover { background: #37373d; color: white; }
+.history-date { font-weight: bold; margin-top: 15px; font-size: 0.85em; color: #666; margin-left: 5px; margin-bottom: 5px; }
+
+/* Chat Area */
+.main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.chat-header { padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; height: 40px; background: var(--bg-dark); }
+.chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.input-area { padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; height: 60px; }
+textarea { flex: 1; background: var(--bg-input); color: white; border: 1px solid var(--border); padding: 10px; resize: none; border-radius: 6px; font-family: inherit; }
+#sendBtn { width: 50px; background: #28a745; border: none; color: white; border-radius: 6px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+.icon-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; }
+.icon-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+
+/* Markdown Styles */
+.message { padding: 12px 16px; border-radius: 8px; max-width: 85%; line-height: 1.6; word-wrap: break-word; }
+.message.user { background-color: #2b5c87; align-self: flex-end; margin-left: auto; }
+.message.assistant { background-color: #333; align-self: flex-start; }
+.message.system { color: #666; font-size: 0.8em; text-align: center; max-width: 100%; align-self: center; background: transparent; }
+
+.message p { margin: 0 0 10px 0; }
+.message p:last-child { margin: 0; }
+.message pre { background: #111; padding: 10px; border-radius: 6px; overflow-x: auto; border: 1px solid #444; }
+.message code { font-family: 'Consolas', monospace; font-size: 0.9em; }
+.message :not(pre) > code { background: rgba(255,255,255,0.15); padding: 2px 4px; border-radius: 3px; }
+.message ul, .message ol { margin: 0 0 10px 0; padding-left: 20px; }
+.message table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }
+.message th, .message td { border: 1px solid #555; padding: 6px; }
+.message th { background: #222; }
