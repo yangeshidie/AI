@@ -1,7 +1,7 @@
 import { state, setSessionFile, setCurrentKB, clearHistory, pushToHistory, setConfig } from '../state.js';
 import { appendMessage } from '../utils.js';
 import { loadHistoryList } from './history.js'; // 循环依赖注意：这里只用于发送后刷新列表
-
+//import { sendMessage, startNewChat, fetchModels, saveConfig, loadConfig, updateConfigFromUI } from './chat.js';
 export async function loadConfig() {
     try {
         const res = await fetch('/api/config');
@@ -106,13 +106,23 @@ export async function fetchModels() {
 
 export function initChatListeners() {
     const input = document.getElementById('userInput');
-    if(input) {
-        input.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                e.preventDefault(); // 防止换行
+    if (input) {
+        // 先移除旧的监听器，防止重复绑定 (虽然 DOMContentLoaded 只跑一次，但好习惯)
+        const newClone = input.cloneNode(true);
+        input.parentNode.replaceChild(newClone, input);
+
+        newClone.addEventListener('keydown', function (e) {
+            // 检查 Ctrl 或 Command (Mac) + Enter
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault(); // 阻止默认换行
+                console.log("Ctrl+Enter detected"); // 调试用
                 sendMessage();
             }
         });
+
+        // 顺便重新绑定一下 ID，防止引用丢失
+        // 注意：因为克隆了节点，需要更新外部对 userInput 的引用，
+        // 但由于我们在 sendMessage 里是现取 document.getElementById('userInput')，所以没影响。
     }
 }
 // 暴露给设置保存按钮

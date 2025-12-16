@@ -3,4 +3,4 @@
 .env.*
 .json
 kb_metadata.json
-
+file_metadata.json
