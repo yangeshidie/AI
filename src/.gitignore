@@ -4,4 +4,4 @@
 .json
 kb_metadata.json
 file_metadata.json
-data_uploads
+/data_uploads/
