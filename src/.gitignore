@@ -1,91 +1,10 @@
-# ====== Secrets / Environment ======
+ai/
+chroma_db/
+data_uploads/
+file_metadata.json
+kb_metadata.json
 .env
-.env.*
-
-# ====== Python ======
+storage
+# Python bytecode
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-*.manifest
-*.spec
-pip-log.txt
-pip-delete-this-directory.txt
-
-# ====== Virtual Environments ======
-.venv/
-venv/
-ENV/
-env/
-
-# ====== IDE / Editor ======
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-.project
-.pydevproject
-.settings/
-*.sublime-project
-*.sublime-workspace
-
-# ====== OS Generated ======
-.DS_Store
-.DS_Store?
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# ====== Logs & Databases ======
-*.log
-*.sql
-*.sqlite
-*.db
-
-# ====== Application Data & Storage ======
-/data_uploads/
-/storage/
-/history/
-/chroma_db/
-*.json
-!package.json
-!package-lock.json
-
-
-# ====== Testing & Coverage ======
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# ====== AI / Model Files ======
-/ai/
-*.bin
-*.pt
-*.pth
-*.onnx
-*.safetensors
+*.pyc
