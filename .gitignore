@@ -1,2 +1,12 @@
 chroma_db/
 tests/
+__pycache__/
+*.py[cod]
+ai/
+data_uploads/
+file_metadata.json
+kb_metadata.json
+.env
+storage
+# Python bytecode
+*.pyc
