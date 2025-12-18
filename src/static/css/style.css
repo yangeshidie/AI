@@ -114,7 +114,7 @@ body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "S
     transition: border-color 0.2s;
 }
 .input-box-wrapper:focus-within { border-color: var(--accent); }
-textarea { width: 100%; background: transparent; border: none; color: #fff; resize: none; font-size: 15px; max-height: 200px; padding: 10px 0; }
+textarea { width: 100%; background: transparent; border: none; color: #fff; resize: vertical; font-size: 15px; min-height: 40px; max-height: 400px; padding: 10px 0; }
 #sendBtn { background: #fff; color: #000; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 #sendBtn:hover { background: #ddd; }
 .footer-note { text-align: center; font-size: 12px; color: #444; margin-top: 10px; }
@@ -335,4 +335,54 @@ textarea { width: 100%; background: transparent; border: none; color: #fff; resi
     margin-top: 20px;
 }
 /* Markdown 代码块 */
+/* Markdown 代码块 */
 pre { background: #111 !important; border: 1px solid #333; border-radius: 8px; padding: 12px; overflow-x: auto; }
+
+/* 提示词列表样式 */
+.prompts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.prompt-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #18181b;
+    border: 1px solid #27272a;
+    padding: 12px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.prompt-item:hover {
+    border-color: var(--accent);
+    background: #27272a;
+}
+
+.prompt-info {
+    flex: 1;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.prompt-name {
+    font-weight: 500;
+    color: #fff;
+}
+
+.prompt-actions {
+    display: flex;
+    gap: 5px;
+}
+
+/* KaTeX 样式调整 */
+.katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 0;
+}

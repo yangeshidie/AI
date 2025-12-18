@@ -46,7 +46,7 @@ export async function sendMessage() {
 
     appendMessage('user', msg);
     input.value = '';
-    pushToHistory({role: 'user', content: msg});
+    pushToHistory({ role: 'user', content: msg });
 
     const loadingDiv = appendMessage('assistant', 'Thinking...', true);
 
@@ -62,7 +62,7 @@ export async function sendMessage() {
 
         const response = await fetch('/api/chat', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
@@ -89,7 +89,7 @@ export async function fetchModels() {
     try {
         const res = await fetch('/api/models', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ api_url: state.config.apiUrl, api_key: state.config.apiKey })
         });
         const data = await res.json();
@@ -100,7 +100,11 @@ export async function fetchModels() {
             select.appendChild(opt);
         });
         document.getElementById('current-model-display').innerText = "Model: " + select.value;
-    } catch(e) { console.error("Load Models Failed", e); }
+        // Add change listener to update model display in real-time
+        select.addEventListener('change', function () {
+            document.getElementById('current-model-display').innerText = "Model: " + this.value;
+        });
+    } catch (e) { console.error("Load Models Failed", e); }
 }
 
 

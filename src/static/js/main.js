@@ -6,6 +6,7 @@ import * as Chat from './modules/chat.js';
 import * as KB from './modules/kb.js';
 import * as Files from './modules/files.js';
 import * as History from './modules/history.js';
+import * as Prompts from './modules/prompts.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     initMarkdown();
@@ -46,3 +47,10 @@ window.deleteHistory = History.deleteHistory;
 window.changeGroup = Files.changeGroup;
 // 通用 Modal
 window.closeModal = closeModal;
+
+// 提示词
+window.showPromptsModal = Prompts.showPromptsModal;
+window.closePromptsModal = Prompts.closePromptsModal;
+window.saveCurrentPrompt = Prompts.saveCurrentPrompt;
+window.usePrompt = Prompts.usePrompt;
+window.deletePromptItem = Prompts.deletePromptItem;

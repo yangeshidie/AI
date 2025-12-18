@@ -15,6 +15,10 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark-reasonable.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- KaTeX for LaTeX rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 </head>
 
 <body>
@@ -97,7 +101,13 @@
                 <!-- 输入框区 -->
                 <div class="input-area">
                     <div class="input-box-wrapper">
-                        <textarea id="userInput" placeholder="输入你的问题... (Ctrl+Enter 发送)" rows="1"></textarea>
+                        <button class="action-icon-btn" onclick="showPromptsModal()" title="提示词库">
+                            <span class="material-symbols-outlined">auto_awesome</span>
+                        </button>
+                        <textarea id="userInput" placeholder="输入你的问题... (Ctrl+Enter 发送)" rows="3"></textarea>
+                        <button class="action-icon-btn" onclick="saveCurrentPrompt()" title="保存提示词">
+                            <span class="material-symbols-outlined">bookmark_add</span>
+                        </button>
                         <button id="sendBtn" onclick="sendMessage()">
                             <span class="material-symbols-outlined">arrow_upward</span>
                         </button>
@@ -234,6 +244,24 @@
                 <button class="secondary-btn" onclick="closeModal('deleteConfirmModal')">取消</button>
                 <button class="primary-btn" id="confirmDeleteBtn" onclick="confirmDeleteFile()"
                     style="background:#ef4444; color:white;">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：提示词库 -->
+    <div class="modal-backdrop" id="promptsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📚 提示词库</h3>
+                <button class="close-icon" onclick="closePromptsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="promptsListContent" class="prompts-list">
+                    <!-- JS will render prompts here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" onclick="closePromptsModal()">关闭</button>
             </div>
         </div>
     </div>

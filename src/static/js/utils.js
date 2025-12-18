@@ -3,7 +3,7 @@
 // 初始化 Markdown
 export function initMarkdown() {
     marked.setOptions({
-        highlight: function(code, lang) {
+        highlight: function (code, lang) {
             const language = hljs.getLanguage(lang) ? lang : 'plaintext';
             return hljs.highlight(code, { language }).value;
         }
@@ -27,6 +27,19 @@ export function appendMessage(role, text, raw = false) {
         contentDiv.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightElement(block);
         });
+
+        // Render LaTeX formulas with KaTeX
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(contentDiv, {
+                delimiters: [
+                    { left: '$$', right: '$$', display: true },
+                    { left: '$', right: '$', display: false },
+                    { left: '\\[', right: '\\]', display: true },
+                    { left: '\\(', right: '\\)', display: false }
+                ],
+                throwOnError: false
+            });
+        }
     }
 
     wrapper.appendChild(contentDiv);
@@ -34,7 +47,7 @@ export function appendMessage(role, text, raw = false) {
 
     // 隐藏欢迎语
     const welcome = document.querySelector('.welcome-banner');
-    if(welcome) welcome.style.display = 'none';
+    if (welcome) welcome.style.display = 'none';
 
     chatBox.scrollTop = chatBox.scrollHeight;
     return contentDiv;
