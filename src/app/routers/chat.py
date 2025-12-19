@@ -2,7 +2,7 @@
 """
 聊天相关 API 路由
 """
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
 
 from fastapi import APIRouter, HTTPException
 from openai import OpenAI
@@ -28,10 +28,19 @@ async def get_config() -> Dict[str, str]:
 
 
 def _extract_last_user_query(messages: List[Dict[str, Any]]) -> str:
-    """从消息列表中提取最后一条用户消息"""
+    """
+    从消息列表中提取最后一条用户消息的文本内容
+    支持处理纯文本字符串和多模态列表格式
+    """
     for msg in reversed(messages):
         if msg.get('role') == 'user':
-            return msg.get('content', '')
+            content = msg.get('content', '')
+            if isinstance(content, str):
+                return content
+            elif isinstance(content, list):
+                # 提取列表中的文本部分
+                text_parts = [item.get('text', '') for item in content if item.get('type') == 'text']
+                return " ".join(text_parts)
     return ''
 
 

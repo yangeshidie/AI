@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexus AI Workbench</title>
     <!-- CSS 路径修改 -->
-    <link rel="stylesheet" href="/static/css/style.css?v=2.1">
+    <link rel="stylesheet" href="/static/css/style.css?v=2.2">
 
     <!-- 图标库 & 第三方库保持不变 -->
     <link rel="stylesheet"
@@ -101,16 +101,52 @@
                 <!-- 输入框区 -->
                 <div class="input-area">
                     <div class="input-box-wrapper">
-                        <button class="action-icon-btn" onclick="showPromptsModal()" title="提示词库">
-                            <span class="material-symbols-outlined">auto_awesome</span>
-                        </button>
-                        <textarea id="userInput" placeholder="输入你的问题... (Ctrl+Enter 发送)" rows="3"></textarea>
-                        <button class="action-icon-btn" onclick="saveCurrentPrompt()" title="保存提示词">
-                            <span class="material-symbols-outlined">bookmark_add</span>
-                        </button>
-                        <button id="sendBtn" onclick="sendMessage()">
-                            <span class="material-symbols-outlined">arrow_upward</span>
-                        </button>
+                        <!-- 工具栏 -->
+                        <div class="input-toolbar">
+                            <button class="action-icon-btn" onclick="document.getElementById('imageInput').click()"
+                                title="上传图片">
+                                <span class="material-symbols-outlined">image</span>
+                            </button>
+                            <button class="action-icon-btn" onclick="document.getElementById('videoInput').click()"
+                                title="上传视频">
+                                <span class="material-symbols-outlined">movie</span>
+                            </button>
+                            <button class="action-icon-btn" onclick="document.getElementById('audioInput').click()"
+                                title="上传音频">
+                                <span class="material-symbols-outlined">mic</span>
+                            </button>
+                            <div style="width: 1px; height: 20px; background: #333; margin: 0 5px;"></div>
+                            <button class="action-icon-btn" onclick="showPromptsModal()" title="提示词库">
+                                <span class="material-symbols-outlined">auto_awesome</span>
+                            </button>
+                            <button class="action-icon-btn" onclick="saveCurrentPrompt()" title="保存提示词">
+                                <span class="material-symbols-outlined">bookmark_add</span>
+                            </button>
+                        </div>
+
+                        <!-- 隐藏的文件输入 -->
+                        <input type="file" id="imageInput" accept="image/*" style="display: none;"
+                            onchange="window.handleFileSelect(this, 'image')">
+                        <input type="file" id="videoInput" accept="video/*" style="display: none;"
+                            onchange="window.handleFileSelect(this, 'video')">
+                        <input type="file" id="audioInput" accept="audio/*" style="display: none;"
+                            onchange="window.handleFileSelect(this, 'audio')">
+
+                        <!-- 文本输入区域 -->
+                        <div class="input-row">
+                            <textarea id="userInput" placeholder="输入你的问题... (Ctrl+Enter 发送)" rows="3"></textarea>
+                            <button id="sendBtn" onclick="sendMessage()">
+                                <span class="material-symbols-outlined">arrow_upward</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- 多模态预览区域 -->
+                    <div id="mediaPreviewArea" style="display: none; padding: 0 10px 10px 10px;">
+                        <div style="position: relative; display: inline-block;">
+                            <div id="mediaPreviewContent"></div>
+                            <button onclick="clearMediaSelection()"
+                                style="position: absolute; top: -8px; right: -8px; background: #ef4444; border: none; color: white; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;">×</button>
+                        </div>
                     </div>
                     <p class="footer-note">AI 生成的内容可能不准确，请核实重要信息。</p>
                 </div>
@@ -195,6 +231,9 @@
 
         </main>
     </div>
+
+    <!-- 悬浮气泡容器 -->
+    <div id="floating-container"></div>
 
     <!-- 模态框：创建知识库 -->
     <div class="modal-backdrop" id="createKBModal">

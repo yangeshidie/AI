@@ -1,7 +1,13 @@
 import { state, setSessionFile, setCurrentKB, clearHistory, pushToHistory, setConfig } from '../state.js';
 import { appendMessage } from '../utils.js';
-import { loadHistoryList } from './history.js'; // 循环依赖注意：这里只用于发送后刷新列表
-//import { sendMessage, startNewChat, fetchModels, saveConfig, loadConfig, updateConfigFromUI } from './chat.js';
+import { loadHistoryList } from './history.js';
+
+let currentMedia = {
+    type: null, // 'image', 'video', 'audio'
+    base64: null,
+    mimeType: null
+};
+
 export async function loadConfig() {
     try {
         const res = await fetch('/api/config');
@@ -38,15 +44,82 @@ export function startNewChat(resetUI = true) {
     }
 }
 
+// === 多模态文件处理逻辑 ===
+window.handleFileSelect = function (input, type) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            currentMedia = {
+                type: type,
+                base64: e.target.result,
+                mimeType: file.type
+            };
+
+            const previewContent = document.getElementById('mediaPreviewContent');
+            previewContent.innerHTML = ''; // Clear previous
+
+            if (type === 'image') {
+                previewContent.innerHTML = `<img src="${currentMedia.base64}" style="max-height: 80px; border-radius: 8px; border: 1px solid #444;">`;
+            } else if (type === 'video') {
+                previewContent.innerHTML = `<video src="${currentMedia.base64}" controls style="max-height: 80px; border-radius: 8px; border: 1px solid #444;"></video>`;
+            } else if (type === 'audio') {
+                previewContent.innerHTML = `<audio src="${currentMedia.base64}" controls style="height: 40px;"></audio>`;
+            }
+
+            document.getElementById('mediaPreviewArea').style.display = 'block';
+        };
+
+        reader.readAsDataURL(file);
+    }
+};
+
+window.clearMediaSelection = function () {
+    currentMedia = { type: null, base64: null, mimeType: null };
+    document.getElementById('imageInput').value = '';
+    document.getElementById('videoInput').value = '';
+    document.getElementById('audioInput').value = '';
+    document.getElementById('mediaPreviewArea').style.display = 'none';
+    document.getElementById('mediaPreviewContent').innerHTML = '';
+};
+
+// Backward compatibility for image only (if needed, but we replaced the call in HTML)
+window.handleImageSelect = function (input) {
+    window.handleFileSelect(input, 'image');
+};
+window.clearImageSelection = window.clearMediaSelection;
+
 export async function sendMessage() {
     updateConfigFromUI();
     const input = document.getElementById('userInput');
-    const msg = input.value.trim();
-    if (!msg) return;
+    const msgText = input.value.trim();
 
-    appendMessage('user', msg);
+    if (!msgText && !currentMedia.base64) return;
+
+    // 构建消息内容 (统一用于 UI 显示和后端发送)
+    let messageContent;
+    if (currentMedia.base64) {
+        messageContent = [
+            { type: "text", text: msgText },
+            {
+                type: "image_url",
+                image_url: {
+                    url: currentMedia.base64
+                }
+            }
+        ];
+    } else {
+        messageContent = msgText;
+    }
+
+    // 直接传递结构化内容给 UI
+    appendMessage('user', messageContent);
+
     input.value = '';
-    pushToHistory({ role: 'user', content: msg });
+    window.clearMediaSelection();
+
+    pushToHistory({ role: 'user', content: messageContent });
 
     const loadingDiv = appendMessage('assistant', 'Thinking...', true);
 
@@ -70,15 +143,100 @@ export async function sendMessage() {
         loadingDiv.remove();
 
         if (data.content) {
-            appendMessage('assistant', data.content);
+            const contentDiv = appendMessage('assistant', data.content);
+            addDetachButton(contentDiv.parentElement, data.content);
             pushToHistory(data);
-            // 刷新历史列表
             loadHistoryList();
         } else {
             appendMessage('system', 'Error: 无内容返回');
         }
     } catch (e) {
         loadingDiv.innerText = "Error: " + e;
+    }
+}
+
+function addDetachButton(messageWrapper, content) {
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'bubble-actions';
+
+    const detachBtn = document.createElement('button');
+    detachBtn.className = 'bubble-btn';
+    detachBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px">open_in_new</span> Detach';
+    detachBtn.onclick = () => detachBubble(content);
+
+    actionsDiv.appendChild(detachBtn);
+    messageWrapper.appendChild(actionsDiv);
+}
+
+// === 悬浮气泡逻辑 ===
+function detachBubble(contentHtml) {
+    const container = document.getElementById('floating-container');
+    const bubbleId = 'bubble-' + Date.now();
+
+    const bubble = document.createElement('div');
+    bubble.className = 'floating-bubble';
+    bubble.id = bubbleId;
+    bubble.style.left = '100px';
+    bubble.style.top = '100px';
+
+    bubble.innerHTML = `
+        <div class="floating-header" id="${bubbleId}-header">
+            <span class="floating-title">Floating Response</span>
+            <button class="floating-close" onclick="document.getElementById('${bubbleId}').remove()">×</button>
+        </div>
+        <div class="floating-content markdown-body">
+            ${marked.parse(contentHtml)}
+        </div>
+    `;
+
+    container.appendChild(bubble);
+
+    bubble.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+
+    if (typeof renderMathInElement === 'function') {
+        renderMathInElement(bubble.querySelector('.floating-content'), {
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\[', right: '\\]', display: true },
+                { left: '\\(', right: '\\)', display: false }
+            ],
+            throwOnError: false
+        });
+    }
+
+    makeDraggable(bubble, document.getElementById(`${bubbleId}-header`));
+}
+
+function makeDraggable(element, handle) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    handle.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
     }
 }
 
@@ -100,36 +258,28 @@ export async function fetchModels() {
             select.appendChild(opt);
         });
         document.getElementById('current-model-display').innerText = "Model: " + select.value;
-        // Add change listener to update model display in real-time
         select.addEventListener('change', function () {
             document.getElementById('current-model-display').innerText = "Model: " + this.value;
         });
     } catch (e) { console.error("Load Models Failed", e); }
 }
 
-
 export function initChatListeners() {
     const input = document.getElementById('userInput');
     if (input) {
-        // 先移除旧的监听器，防止重复绑定 (虽然 DOMContentLoaded 只跑一次，但好习惯)
         const newClone = input.cloneNode(true);
         input.parentNode.replaceChild(newClone, input);
 
         newClone.addEventListener('keydown', function (e) {
-            // 检查 Ctrl 或 Command (Mac) + Enter
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault(); // 阻止默认换行
-                console.log("Ctrl+Enter detected"); // 调试用
+                e.preventDefault();
+                console.log("Ctrl+Enter detected");
                 sendMessage();
             }
         });
-
-        // 顺便重新绑定一下 ID，防止引用丢失
-        // 注意：因为克隆了节点，需要更新外部对 userInput 的引用，
-        // 但由于我们在 sendMessage 里是现取 document.getElementById('userInput')，所以没影响。
     }
 }
-// 暴露给设置保存按钮
+
 export function saveConfig() {
     updateConfigFromUI();
     alert("配置已更新 (仅本次会话有效)");
