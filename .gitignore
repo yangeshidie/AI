@@ -10,3 +10,5 @@ kb_metadata.json
 storage
 # Python bytecode
 *.pyc
+# JetBrains IDE
+.idea/
