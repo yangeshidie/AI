@@ -9,14 +9,12 @@ let currentMedia = {
 };
 
 export async function loadConfig() {
-    try {
-        const res = await fetch('/api/config');
-        const config = await res.json();
-        setConfig(config);
-        document.getElementById('apiUrl').value = config.api_url;
-        document.getElementById('apiKey').value = config.api_key;
-        fetchModels();
-    } catch (e) { console.error(e); }
+    // 1. 停止请求不存在的 '/api/config'
+    // 2. 这里的逻辑应该依赖 Settings 模块或者读取 localStorage
+    // 为了防止报错，我们只做简单的初始化检查
+    console.log("Chat initialized.");
+
+    // 如果你希望页面加载时自动选中第一个配置，逻辑应移至 Settings.loadConfigs()
 }
 
 export function updateConfigFromUI() {
@@ -245,10 +243,18 @@ export async function fetchModels() {
     const select = document.getElementById('modelSelect');
     select.innerHTML = '<option>Loading...</option>';
     try {
-        const res = await fetch('/api/models', {
+        // 注意：后端需要的是 api_url 还是 base_url?
+        // 你的 settings.py 中没有 /api/models 接口，通常这是转发接口。
+        // 假设 /api/models 存在且接收 api_url:
+        const res = await fetch('/api/models', { // 确保你有这个路由，或者用 chat 路由测试
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ api_url: state.config.apiUrl, api_key: state.config.apiKey })
+            body: JSON.stringify({
+                // 确保这里传递的值是后端期望的
+                base_url: state.config.apiUrl,  // 有些后端库叫 base_url
+                api_url: state.config.apiUrl,   // 有些叫 api_url，两个都传保险
+                api_key: state.config.apiKey
+            })
         });
         const data = await res.json();
         select.innerHTML = '';

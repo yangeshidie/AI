@@ -1,5 +1,7 @@
 // static/js/main.js
 
+// static/js/main.js
+
 import { initMarkdown, closeModal } from './utils.js';
 import { switchView } from './router.js';
 import * as Chat from './modules/chat.js';
@@ -7,10 +9,12 @@ import * as KB from './modules/kb.js';
 import * as Files from './modules/files.js';
 import * as History from './modules/history.js';
 import * as Prompts from './modules/prompts.js';
+import * as Settings from './modules/settings.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     initMarkdown();
     Chat.loadConfig();
+    Settings.loadConfigs(); // Load stored configs
     Chat.initChatListeners();
     switchView('chat');
 });
@@ -54,3 +58,10 @@ window.closePromptsModal = Prompts.closePromptsModal;
 window.saveCurrentPrompt = Prompts.saveCurrentPrompt;
 window.usePrompt = Prompts.usePrompt;
 window.deletePromptItem = Prompts.deletePromptItem;
+
+// 设置
+window.loadConfigs = Settings.loadConfigs;
+window.applyConfig = Settings.applyConfig;
+window.showAddConfigModal = Settings.showAddConfigModal;
+window.closeAddConfigModal = Settings.closeAddConfigModal;
+window.saveNewConfig = Settings.saveNewConfig;

@@ -94,6 +94,21 @@ async def chat_endpoint(request: ChatRequest) -> Dict[str, str]:
         )
         final_content = response.choices[0].message.content
 
+        # 尝试解析 JSON 格式的非文本响应
+        try:
+            import json
+            if final_content.strip().startswith("{") and final_content.strip().endswith("}"):
+                data = json.loads(final_content)
+                # 检查是否有 image 字段
+                if "image" in data:
+                    image_url = data["image"]
+                    final_content = f"![Generated Image]({image_url})\n\n{data.get('text', '')}"
+                elif "image_url" in data:
+                    image_url = data["image_url"]
+                    final_content = f"![Generated Image]({image_url})\n\n{data.get('text', '')}"
+        except Exception:
+            pass # 解析失败则保留原始内容
+
         new_history = request.messages + [{"role": "assistant", "content": final_content}]
         save_history(new_history, request.session_file)
 

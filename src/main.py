@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 # 导入拆分后的路由
-from app.routers import chat, files, kb, history, prompts
+from app.routers import chat, files, kb, history, prompts, settings
 
 app = FastAPI(title="Nexus AI Local")
 
@@ -16,6 +16,7 @@ app.include_router(files.router)
 app.include_router(kb.router)
 app.include_router(history.router)
 app.include_router(prompts.router)
+app.include_router(settings.router)
 
 # 3. 根路径
 @app.get("/")
