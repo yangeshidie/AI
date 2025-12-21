@@ -197,10 +197,65 @@
                 </div>
             </div>
 
-            <!-- 4. 设置视图 -->
+<!-- 4. 设置视图 -->
             <div id="view-settings" class="view-section">
-        </main>
-    </div>
+                <header class="top-bar">
+                    <div class="page-title">
+                        <h3>系统设置</h3>
+                        <p>配置模型 API 和系统参数</p>
+                    </div>
+                </header>
+
+                <div class="content-scrollable" style="padding: 20px;">
+                    <div style="max-width: 600px; margin: 0 auto;">
+
+                        <!-- 1. 配置预设 (JS 必须 ID: configSelect) -->
+                        <div class="settings-card" style="background: #27272a; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <label style="display:block; margin-bottom:10px; color:#888;">配置预设</label>
+                            <div style="display: flex; gap: 10px;">
+                                <select id="configSelect" class="input-dark" onchange="applyConfig(this.value)" style="flex:1">
+                                    <option value="">-- Loading --</option>
+                                </select>
+                                <button class="secondary-btn" onclick="showAddConfigModal()">
+                                    <span class="material-symbols-outlined">add</span> 新增
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 2. 详细参数 (JS 必须 ID: apiUrl, apiKey, modelSelect) -->
+                        <div class="settings-card" style="background: #27272a; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <div class="form-group" style="margin-bottom:15px;">
+                                <label style="display:block; margin-bottom:5px;">API Base URL</label>
+                                <input type="text" id="apiUrl" class="input-dark" style="width:100%;">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom:15px;">
+                                <label style="display:block; margin-bottom:5px;">API Key</label>
+                                <input type="password" id="apiKey" class="input-dark" style="width:100%;">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom:20px;">
+                                <label style="display:block; margin-bottom:5px;">模型选择</label>
+                                <div style="display: flex; gap: 10px;">
+                                    <select id="modelSelect" class="input-dark" style="flex:1"></select>
+                                    <button class="secondary-btn" onclick="fetchModels()" title="刷新列表">
+                                        <span class="material-symbols-outlined">refresh</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="text-align: right;">
+                                <button class="primary-btn" onclick="saveConfig()">保存至当前会话</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <!-- view-settings 结束 -->
+
+        </main> <!-- main 结束 -->
+    </div> <!-- app-wrapper 结束 -->
 
     <!-- 悬浮气泡容器 -->
     <div id="floating-container"></div>
@@ -242,8 +297,7 @@
             </div>
             <div class="modal-body">
                 <p id="deleteWarningText">确定要删除此文件吗？</p>
-                <div id="affectedAgentsList"
-                    style="margin-top:10px; padding:10px; background:#27272a; border-radius:6px; font-size:13px; color:#ddd; display:none;">
+                <div id="affectedAgentsList" style="margin-top:10px; padding:10px; background:#27272a; border-radius:6px; font-size:13px; color:#ddd; display:none;">
                     <strong>此操作将影响以下智能体：</strong>
                     <ul id="affectedListUl" style="margin:5px 0 0 20px; padding:0;"></ul>
                     <p style="margin-top:10px; color:#aaa; font-size:12px;">确认删除后，文件将自动从这些智能体中移除。</p>
@@ -251,203 +305,7 @@
             </div>
             <div class="modal-footer">
                 <button class="secondary-btn" onclick="closeModal('deleteConfirmModal')">取消</button>
-                <button class="primary-btn" id="confirmDeleteBtn" onclick="confirmDeleteFile()"
-                    style="background:#ef4444; color:white;">确认删除</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 模态框：提示词库 -->
-    <div class="modal-backdrop" id="promptsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>📚 提示词库</h3>
-                <button class="close-icon" onclick="closePromptsModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <div id="promptsListContent" class="prompts-list">
-                    <!-- JS will render prompts here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <h3 id="chat-title">General Chat</h3>
-                <p id="chat-subtitle">自由对话模式</p>
-            </div>
-        </div>
-        <div class="top-actions">
-            <button class="action-icon-btn" onclick="startNewChat()" title="新对话">
-                <span class="material-symbols-outlined">add</span>
-            </button>
-            <button class="action-icon-btn" onclick="toggleHistory()" title="历史记录">
-                <span class="material-symbols-outlined">history</span>
-            </button>
-        </div>
-        </header>
-
-        <!-- 聊天滚动区 -->
-        <div class="chat-area" id="chatBox">
-            <div class="welcome-banner">
-                <span class="material-symbols-outlined logo-large">neurology</span>
-                <h1>Hello, Human.</h1>
-                <p>请选择左侧的"智能体库"挂载知识库，<br>或者直接在这里开始通用对话。</p>
-            </div>
-        </div>
-
-        <!-- 输入框区 -->
-        <div class="input-area">
-            <div class="input-box-wrapper">
-                <!-- 工具栏 -->
-                <div class="input-toolbar">
-                    <button class="action-icon-btn" onclick="document.getElementById('imageInput').click()"
-                        title="上传图片">
-                        <span class="material-symbols-outlined">image</span>
-                    </button>
-                    <button class="action-icon-btn" onclick="document.getElementById('videoInput').click()"
-                        title="上传视频">
-                        <span class="material-symbols-outlined">movie</span>
-                    </button>
-                    <button class="action-icon-btn" onclick="document.getElementById('audioInput').click()"
-                        title="上传音频">
-                        <span class="material-symbols-outlined">mic</span>
-                    </button>
-                    <div style="width: 1px; height: 20px; background: #333; margin: 0 5px;"></div>
-                    <button class="action-icon-btn" onclick="showPromptsModal()" title="提示词库">
-                        <span class="material-symbols-outlined">auto_awesome</span>
-                    </button>
-                    <button class="action-icon-btn" onclick="saveCurrentPrompt()" title="保存提示词">
-                        <span class="material-symbols-outlined">bookmark_add</span>
-                    </button>
-                </div>
-
-                <!-- 隐藏的文件输入 -->
-                <input type="file" id="imageInput" accept="image/*" style="display: none;"
-                    onchange="window.handleFileSelect(this, 'image')">
-                <input type="file" id="videoInput" accept="video/*" style="display: none;"
-                    onchange="window.handleFileSelect(this, 'video')">
-                <input type="file" id="audioInput" accept="audio/*" style="display: none;"
-                    onchange="window.handleFileSelect(this, 'audio')">
-
-                <!-- 文本输入区域 -->
-                <div class="input-row">
-                    <textarea id="userInput" placeholder="输入你的问题... (Ctrl+Enter 发送)" rows="3"></textarea>
-                    <button id="sendBtn" onclick="sendMessage()">
-                        <span class="material-symbols-outlined">arrow_upward</span>
-                    </button>
-                </div>
-            </div>
-            <!-- 多模态预览区域 -->
-            <div id="mediaPreviewArea" style="display: none; padding: 0 10px 10px 10px;">
-                <div style="position: relative; display: inline-block;">
-                    <div id="mediaPreviewContent"></div>
-                    <button onclick="clearMediaSelection()"
-                        style="position: absolute; top: -8px; right: -8px; background: #ef4444; border: none; color: white; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;">×</button>
-                </div>
-            </div>
-            <p class="footer-note">AI 生成的内容可能不准确，请核实重要信息。</p>
-        </div>
-
-        <!-- 历史记录抽屉 (绝对定位) -->
-        <div class="history-drawer" id="historyDrawer">
-            <div class="drawer-header">
-                <h3>历史记录</h3>
-                <button onclick="toggleHistory()">×</button>
-            </div>
-            <div id="historyListContent" class="history-list">
-                <!-- JS 将生成带操作按钮的列表 -->
-            </div>
-        </div>
-    </div>
-
-    <!-- 2. 智能体库视图 -->
-    <div id="view-agents" class="view-section">
-        <header class="top-bar">
-            <div class="page-title">
-                <h3>智能体 / 知识库</h3>
-                <p>管理您的专属 AI 助手</p>
-            </div>
-            <button class="primary-btn" onclick="showCreateKBModal()">
-                <span class="material-symbols-outlined">add</span> 新建智能体
-            </button>
-        </header>
-        <div class="content-scrollable">
-            <div class="cards-grid" id="kb-grid"></div>
-        </div>
-    </div>
-
-    <!-- 3. 根数据库视图 -->
-    <div id="view-library" class="view-section">
-        <header class="top-bar">
-            <div class="page-title">
-                <h3>根数据库</h3>
-                <p>所有原始文件的存储中心</p>
-            </div>
-            <label class="primary-btn">
-                <span class="material-symbols-outlined">upload_file</span> 上传文件
-                <input type="file" id="rootUploadInput" multiple onchange="handleRootUpload(this)" hidden>
-            </label>
-        </header>
-        <div class="content-scrollable" id="file-library-container">
-            <!-- JS 将在这里渲染分组容器 -->
-            <div style="text-align:center; padding: 20px; color: #666;">加载中...</div>
-        </div>
-    </div>
-
-    <!-- 4. 设置视图 -->
-    <div id="view-settings" class="view-section">
-        </main>
-    </div>
-
-    <!-- 悬浮气泡容器 -->
-    <div id="floating-container"></div>
-
-    <!-- 模态框：创建知识库 -->
-    <div class="modal-backdrop" id="createKBModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>创建新智能体</h3>
-                <button class="close-icon" onclick="closeModal('createKBModal')">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>智能体名称</label>
-                    <input type="text" id="kbName" class="input-dark" placeholder="例如: 公司财报助手">
-                </div>
-                <div class="form-group">
-                    <label>功能描述</label>
-                    <input type="text" id="kbDesc" class="input-dark" placeholder="简单描述它的用途...">
-                </div>
-                <div class="form-group">
-                    <label>关联知识库文件</label>
-                    <div class="file-selector-box" id="kbFileSelector"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="secondary-btn" onclick="closeModal('createKBModal')">取消</button>
-                <button class="primary-btn" onclick="submitCreateKB()">立即创建</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 模态框：删除确认 -->
-    <div class="modal-backdrop" id="deleteConfirmModal">
-        <div class="modal-content" style="border-color: #ef4444;">
-            <div class="modal-header">
-                <h3 style="color: #ef4444;">⚠️ 删除确认</h3>
-                <button class="close-icon" onclick="closeModal('deleteConfirmModal')">×</button>
-            </div>
-            <div class="modal-body">
-                <p id="deleteWarningText">确定要删除此文件吗？</p>
-                <div id="affectedAgentsList"
-                    style="margin-top:10px; padding:10px; background:#27272a; border-radius:6px; font-size:13px; color:#ddd; display:none;">
-                    <strong>此操作将影响以下智能体：</strong>
-                    <ul id="affectedListUl" style="margin:5px 0 0 20px; padding:0;"></ul>
-                    <p style="margin-top:10px; color:#aaa; font-size:12px;">确认删除后，文件将自动从这些智能体中移除。</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="secondary-btn" onclick="closeModal('deleteConfirmModal')">取消</button>
-                <button class="primary-btn" id="confirmDeleteBtn" onclick="confirmDeleteFile()"
-                    style="background:#ef4444; color:white;">确认删除</button>
+                <button class="primary-btn" id="confirmDeleteBtn" onclick="confirmDeleteFile()" style="background:#ef4444; color:white;">确认删除</button>
             </div>
         </div>
     </div>
@@ -470,30 +328,30 @@
         </div>
     </div>
 
-    <!-- Add Config Modal -->
-    <div id="addConfigModal" class="modal">
+    <!-- Add Config Modal (Class 已修复为 modal-backdrop) -->
+    <div id="addConfigModal" class="modal-backdrop">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
                 <h3>Add New Configuration</h3>
-                <button class="close-btn" onclick="closeAddConfigModal()">×</button>
+                <button class="close-icon" onclick="closeAddConfigModal()">×</button>
             </div>
             <div class="modal-body">
-                <div class="input-group">
-                    <label>Config Name (e.g. DeepSeek)</label>
-                    <input type="text" id="newConfigName" placeholder="MyConfig">
+                <div class="form-group">
+                    <label>Config Name</label>
+                    <input type="text" id="newConfigName" class="input-dark" placeholder="MyConfig">
                 </div>
-                <div class="input-group">
+                <div class="form-group">
                     <label>Base URL</label>
-                    <input type="text" id="newConfigUrl" placeholder="https://api.example.com/v1">
+                    <input type="text" id="newConfigUrl" class="input-dark" placeholder="https://api.example.com/v1">
                 </div>
-                <div class="input-group">
+                <div class="form-group">
                     <label>API Key</label>
-                    <input type="password" id="newConfigKey" placeholder="sk-...">
+                    <input type="password" id="newConfigKey" class="input-dark" placeholder="sk-...">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn secondary-btn" onclick="closeAddConfigModal()">Cancel</button>
-                <button class="btn primary-btn" onclick="saveNewConfig()">Save</button>
+                <button class="secondary-btn" onclick="closeAddConfigModal()">Cancel</button>
+                <button class="primary-btn" onclick="saveNewConfig()">Save</button>
             </div>
         </div>
     </div>
