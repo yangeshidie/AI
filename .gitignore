@@ -12,3 +12,5 @@ storage
 *.pyc
 # JetBrains IDE
 .idea/
+# Python cache
+*.sqlite3
