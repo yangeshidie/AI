@@ -128,7 +128,7 @@ export async function renameFile(oldName) {
 export async function tryDeleteFile(filename) {
     setFileToDelete(filename);
     try {
-        const res = await fetch('/api/files/delete', {
+        const res = await fetch('/api/files/delete/', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ filename: filename, confirm_delete: false })
@@ -161,7 +161,7 @@ export async function confirmDeleteFile() {
     btn.disabled = true;
 
     try {
-        const res = await fetch('/api/files/delete', {
+        const res = await fetch('/api/files/delete/', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ filename: state.fileToDelete, confirm_delete: true })
@@ -194,3 +194,8 @@ export function closeDeleteModal() {
     closeModal('deleteConfirmModal');
     setFileToDelete(null);
 }
+
+window.changeGroup = changeGroup;
+window.renameFile = renameFile;
+window.tryDeleteFile = tryDeleteFile;
+window.handleRootUpload = handleRootUpload;

@@ -47,6 +47,7 @@ load_dotenv()
 # 基础路径配置
 # =============================================================================
 BASE_DIR: Path = Path(".")
+STATIC_DIR: Path = BASE_DIR / "static"
 HISTORY_DIR: Path = BASE_DIR / "history"
 UPLOAD_DIR: Path = BASE_DIR / "data_uploads"
 KB_META_FILE: Path = BASE_DIR / "kb_metadata.json"

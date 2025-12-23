@@ -105,9 +105,22 @@
                         <div class="input-toolbar">
                             <button class="action-icon-btn" onclick="document.getElementById('imageInput').click()"
                                 title="上传图片">
-                                <button class="action-icon-btn" onclick="saveCurrentPrompt()" title="保存提示词">
-                                    <span class="material-symbols-outlined">bookmark_add</span>
-                                </button>
+                                <span class="material-symbols-outlined">image</span>
+                            </button>
+                            <button class="action-icon-btn" onclick="document.getElementById('videoInput').click()"
+                                title="上传视频">
+                                <span class="material-symbols-outlined">movie</span>
+                            </button>
+                            <button class="action-icon-btn" onclick="document.getElementById('audioInput').click()"
+                                title="上传音频">
+                                <span class="material-symbols-outlined">mic</span>
+                            </button>
+                            <button class="action-icon-btn" onclick="showPromptsModal()" title="提示词库">
+                                <span class="material-symbols-outlined">library_books</span>
+                            </button>
+                            <button class="action-icon-btn" onclick="saveCurrentPrompt()" title="保存提示词">
+                                <span class="material-symbols-outlined">bookmark_add</span>
+                            </button>
                         </div>
 
                         <!-- 隐藏的文件输入 -->
@@ -174,7 +187,7 @@
                     </div>
                     <label class="primary-btn">
                         <span class="material-symbols-outlined">upload_file</span> 上传文件
-                        <input type="file" id="rootUploadInput" multiple onchange="handleRootUpload(this)" hidden>
+                        <input type="file" id="rootUploadInput" multiple onchange="window.handleRootUpload(this)" hidden>
                     </label>
                 </header>
                 <div class="content-scrollable" id="file-library-container">
@@ -319,7 +332,7 @@
         </div>
     </div>
 
-    <!-- Add Config Modal (Class 已修复为 modal-backdrop) -->
+    <!-- Add Config Modal -->
     <div id="addConfigModal" class="modal-backdrop">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">

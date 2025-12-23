@@ -1,5 +1,4 @@
 import { appendMessage } from '../utils.js';
-import { startNewChat } from './chat.js';
 import { state, setSessionFile, clearHistory, pushToHistory, setCurrentKB } from '../state.js';
 
 export function toggleHistory() {
@@ -45,7 +44,7 @@ export async function loadSession(filepath) {
     try {
         const res = await fetch('/api/history/load', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filepath: filepath })
         });
         const historyData = await res.json();
@@ -75,24 +74,25 @@ export async function renameHistory(fullPath, oldName) {
     try {
         await fetch('/api/history/rename', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: fullPath, new_name: newName })
         });
         loadHistoryList();
-    } catch(e) { alert("失败: " + e); }
+    } catch (e) { alert("失败: " + e); }
 }
 
 export async function deleteHistory(fullPath) {
-    if(!confirm("确定删除此会话记录？")) return;
+    if (!confirm("确定删除此会话记录？")) return;
     try {
         await fetch('/api/history/delete', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: fullPath })
         });
         loadHistoryList();
         if (state.currentSessionFile && state.currentSessionFile.includes(fullPath.split('/')[1])) {
+            const { startNewChat } = await import('./chat.js');
             startNewChat();
         }
-    } catch(e) { alert("失败: " + e); }
+    } catch (e) { alert("失败: " + e); }
 }

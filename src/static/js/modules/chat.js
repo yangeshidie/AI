@@ -1,3 +1,9 @@
+import { state, setConfig, setSessionFile, clearHistory, setCurrentKB, pushToHistory } from '../state.js';
+import { appendMessage } from '../utils.js';
+import { loadHistoryList } from './history.js';
+
+export let currentAttachments = [];
+
 export function updateConfigFromUI() {
     const newConfig = {
         apiUrl: document.getElementById('apiUrl').value,
@@ -69,7 +75,7 @@ export async function sendMessage() {
     appendMessage('user', uiContent);
 
     input.value = '';
-    window.clearMediaSelection();
+    clearMediaSelection();
 
     pushToHistory({ role: 'user', content: messageContent });
 
@@ -103,7 +109,7 @@ export async function sendMessage() {
             appendMessage('system', 'Error: 无内容返回');
         }
     } catch (e) {
-        loadingDiv.innerText = "Error: " + e;
+        if (loadingDiv) loadingDiv.innerText = "Error: " + e;
     }
 }
 
@@ -197,16 +203,12 @@ export async function fetchModels() {
     const select = document.getElementById('modelSelect');
     select.innerHTML = '<option>Loading...</option>';
     try {
-        // 注意：后端需要的是 api_url 还是 base_url?
-        // 你的 settings.py 中没有 /api/models 接口，通常这是转发接口。
-        // 假设 /api/models 存在且接收 api_url:
-        const res = await fetch('/api/models', { // 确保你有这个路由，或者用 chat 路由测试
+        const res = await fetch('/api/models', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                // 确保这里传递的值是后端期望的
-                base_url: state.config.apiUrl,  // 有些后端库叫 base_url
-                api_url: state.config.apiUrl,   // 有些叫 api_url，两个都传保险
+                base_url: state.config.apiUrl,
+                api_url: state.config.apiUrl,
                 api_key: state.config.apiKey
             })
         });
@@ -243,4 +245,54 @@ export function initChatListeners() {
 export function saveConfig() {
     updateConfigFromUI();
     alert("配置已更新 (仅本次会话有效)");
+}
+
+export function loadConfig() {
+    updateConfigFromUI();
+}
+
+export function handleFileSelect(input, type) {
+    const files = input.files;
+    if (!files.length) return;
+
+    const file = files[0];
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+        const base64 = e.target.result;
+        currentAttachments.push({
+            type: type,
+            name: file.name,
+            base64: base64
+        });
+        updateMediaPreview();
+    };
+
+    reader.readAsDataURL(file);
+    input.value = ''; // Reset input
+}
+
+export function clearMediaSelection() {
+    currentAttachments = [];
+    updateMediaPreview();
+}
+
+function updateMediaPreview() {
+    const previewArea = document.getElementById('mediaPreviewArea');
+    const contentDiv = document.getElementById('mediaPreviewContent');
+
+    if (currentAttachments.length === 0) {
+        previewArea.style.display = 'none';
+        contentDiv.innerHTML = '';
+        return;
+    }
+
+    previewArea.style.display = 'block';
+    contentDiv.innerHTML = currentAttachments.map(att => {
+        if (att.type === 'image') {
+            return `<img src="${att.base64}" style="height: 60px; border-radius: 4px; margin-right: 5px;">`;
+        } else {
+            return `<span style="display:inline-block; padding: 5px 10px; background: #333; border-radius: 4px; margin-right: 5px; font-size: 12px;">[${att.type}] ${att.name}</span>`;
+        }
+    }).join('');
 }

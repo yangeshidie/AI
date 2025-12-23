@@ -1,7 +1,5 @@
 // static/js/main.js
 
-// static/js/main.js
-
 import { initMarkdown, closeModal } from './utils.js';
 import { switchView } from './router.js';
 import * as Chat from './modules/chat.js';
@@ -29,6 +27,9 @@ window.startNewChat = Chat.startNewChat;
 window.sendMessage = Chat.sendMessage;
 window.fetchModels = Chat.fetchModels;
 window.saveConfig = Chat.saveConfig;
+window.handleFileSelect = Chat.handleFileSelect;
+window.handleFileSelect = handleFileSelect;
+window.clearMediaSelection = Chat.clearMediaSelection;
 
 // 知识库 KB
 window.loadKBList = KB.loadKBList;
@@ -42,13 +43,14 @@ window.renameFile = Files.renameFile;
 window.tryDeleteFile = Files.tryDeleteFile;
 window.confirmDeleteFile = Files.confirmDeleteFile;
 window.closeDeleteModal = Files.closeDeleteModal;
+window.changeGroup = Files.changeGroup;
 
 // 历史记录
 window.toggleHistory = History.toggleHistory;
 window.loadSession = History.loadSession;
 window.renameHistory = History.renameHistory;
 window.deleteHistory = History.deleteHistory;
-window.changeGroup = Files.changeGroup;
+
 // 通用 Modal
 window.closeModal = closeModal;
 
