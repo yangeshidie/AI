@@ -25,5 +25,10 @@ async def read_index():
 
 if __name__ == "__main__":
     import uvicorn
+    from app.config import STATIC_DIR
+    
+    # 确保生成的图片目录存在
+    (STATIC_DIR / "generated_images").mkdir(parents=True, exist_ok=True)
+    
     print("🚀 Nexus AI Modularized Server Starting...")
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

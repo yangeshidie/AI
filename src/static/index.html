@@ -105,23 +105,9 @@
                         <div class="input-toolbar">
                             <button class="action-icon-btn" onclick="document.getElementById('imageInput').click()"
                                 title="上传图片">
-                                <span class="material-symbols-outlined">image</span>
-                            </button>
-                            <button class="action-icon-btn" onclick="document.getElementById('videoInput').click()"
-                                title="上传视频">
-                                <span class="material-symbols-outlined">movie</span>
-                            </button>
-                            <button class="action-icon-btn" onclick="document.getElementById('audioInput').click()"
-                                title="上传音频">
-                                <span class="material-symbols-outlined">mic</span>
-                            </button>
-                            <div style="width: 1px; height: 20px; background: #333; margin: 0 5px;"></div>
-                            <button class="action-icon-btn" onclick="showPromptsModal()" title="提示词库">
-                                <span class="material-symbols-outlined">auto_awesome</span>
-                            </button>
-                            <button class="action-icon-btn" onclick="saveCurrentPrompt()" title="保存提示词">
-                                <span class="material-symbols-outlined">bookmark_add</span>
-                            </button>
+                                <button class="action-icon-btn" onclick="saveCurrentPrompt()" title="保存提示词">
+                                    <span class="material-symbols-outlined">bookmark_add</span>
+                                </button>
                         </div>
 
                         <!-- 隐藏的文件输入 -->
@@ -197,7 +183,7 @@
                 </div>
             </div>
 
-<!-- 4. 设置视图 -->
+            <!-- 4. 设置视图 -->
             <div id="view-settings" class="view-section">
                 <header class="top-bar">
                     <div class="page-title">
@@ -210,10 +196,12 @@
                     <div style="max-width: 600px; margin: 0 auto;">
 
                         <!-- 1. 配置预设 (JS 必须 ID: configSelect) -->
-                        <div class="settings-card" style="background: #27272a; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <div class="settings-card"
+                            style="background: #27272a; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                             <label style="display:block; margin-bottom:10px; color:#888;">配置预设</label>
                             <div style="display: flex; gap: 10px;">
-                                <select id="configSelect" class="input-dark" onchange="applyConfig(this.value)" style="flex:1">
+                                <select id="configSelect" class="input-dark" onchange="applyConfig(this.value)"
+                                    style="flex:1">
                                     <option value="">-- Loading --</option>
                                 </select>
                                 <button class="secondary-btn" onclick="showAddConfigModal()">
@@ -223,7 +211,8 @@
                         </div>
 
                         <!-- 2. 详细参数 (JS 必须 ID: apiUrl, apiKey, modelSelect) -->
-                        <div class="settings-card" style="background: #27272a; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <div class="settings-card"
+                            style="background: #27272a; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                             <div class="form-group" style="margin-bottom:15px;">
                                 <label style="display:block; margin-bottom:5px;">API Base URL</label>
                                 <input type="text" id="apiUrl" class="input-dark" style="width:100%;">
@@ -297,7 +286,8 @@
             </div>
             <div class="modal-body">
                 <p id="deleteWarningText">确定要删除此文件吗？</p>
-                <div id="affectedAgentsList" style="margin-top:10px; padding:10px; background:#27272a; border-radius:6px; font-size:13px; color:#ddd; display:none;">
+                <div id="affectedAgentsList"
+                    style="margin-top:10px; padding:10px; background:#27272a; border-radius:6px; font-size:13px; color:#ddd; display:none;">
                     <strong>此操作将影响以下智能体：</strong>
                     <ul id="affectedListUl" style="margin:5px 0 0 20px; padding:0;"></ul>
                     <p style="margin-top:10px; color:#aaa; font-size:12px;">确认删除后，文件将自动从这些智能体中移除。</p>
@@ -305,7 +295,8 @@
             </div>
             <div class="modal-footer">
                 <button class="secondary-btn" onclick="closeModal('deleteConfirmModal')">取消</button>
-                <button class="primary-btn" id="confirmDeleteBtn" onclick="confirmDeleteFile()" style="background:#ef4444; color:white;">确认删除</button>
+                <button class="primary-btn" id="confirmDeleteBtn" onclick="confirmDeleteFile()"
+                    style="background:#ef4444; color:white;">确认删除</button>
             </div>
         </div>
     </div>

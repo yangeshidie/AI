@@ -97,16 +97,56 @@ async def chat_endpoint(request: ChatRequest) -> Dict[str, str]:
         # 尝试解析 JSON 格式的非文本响应
         try:
             import json
+            import base64
+            import uuid
+            from app.config import STATIC_DIR
+
+            # 确保生成的图片目录存在
+            generated_images_dir = STATIC_DIR / "generated_images"
+            generated_images_dir.mkdir(exist_ok=True)
+
             if final_content.strip().startswith("{") and final_content.strip().endswith("}"):
                 data = json.loads(final_content)
-                # 检查是否有 image 字段
+                
+                # 处理 image 字段 (base64)
+                image_data_b64 = None
                 if "image" in data:
-                    image_url = data["image"]
-                    final_content = f"![Generated Image]({image_url})\n\n{data.get('text', '')}"
+                    image_data_b64 = data["image"]
                 elif "image_url" in data:
-                    image_url = data["image_url"]
-                    final_content = f"![Generated Image]({image_url})\n\n{data.get('text', '')}"
-        except Exception:
+                    # 有些模型可能返回 image_url 字段带 base64
+                    if data["image_url"].startswith("data:image"):
+                        image_data_b64 = data["image_url"]
+                    else:
+                        # 如果是真实 URL，直接使用
+                        final_content = f"![Generated Image]({data['image_url']})\n\n{data.get('text', '')}"
+
+                if image_data_b64:
+                    # 提取 base64 数据
+                    if "base64," in image_data_b64:
+                        header, encoded = image_data_b64.split("base64,", 1)
+                        file_ext = "png"  # 默认
+                        if "image/jpeg" in header: file_ext = "jpg"
+                        elif "image/webp" in header: file_ext = "webp"
+                    else:
+                        encoded = image_data_b64
+                        file_ext = "png"
+
+                    # 保存到文件
+                    img_filename = f"gen_{uuid.uuid4().hex}.{file_ext}"
+                    img_path = generated_images_dir / img_filename
+                    
+                    with open(img_path, "wb") as f:
+                        f.write(base64.b64decode(encoded))
+                    
+                    # 生成本地 URL
+                    local_url = f"/static/generated_images/{img_filename}"
+                    print(f"🖼️ Image saved to {local_url}")
+
+                    # 替换内容中的 base64 为 URL
+                    final_content = f"![Generated Image]({local_url})\n\n{data.get('text', '')}"
+
+        except Exception as e:
+            print(f"Error parsing/saving image: {e}")
             pass # 解析失败则保留原始内容
 
         new_history = request.messages + [{"role": "assistant", "content": final_content}]

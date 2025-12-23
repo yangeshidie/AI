@@ -1,22 +1,3 @@
-import { state, setSessionFile, setCurrentKB, clearHistory, pushToHistory, setConfig } from '../state.js';
-import { appendMessage } from '../utils.js';
-import { loadHistoryList } from './history.js';
-
-let currentMedia = {
-    type: null, // 'image', 'video', 'audio'
-    base64: null,
-    mimeType: null
-};
-
-export async function loadConfig() {
-    // 1. 停止请求不存在的 '/api/config'
-    // 2. 这里的逻辑应该依赖 Settings 模块或者读取 localStorage
-    // 为了防止报错，我们只做简单的初始化检查
-    console.log("Chat initialized.");
-
-    // 如果你希望页面加载时自动选中第一个配置，逻辑应移至 Settings.loadConfigs()
-}
-
 export function updateConfigFromUI() {
     const newConfig = {
         apiUrl: document.getElementById('apiUrl').value,
@@ -42,77 +23,50 @@ export function startNewChat(resetUI = true) {
     }
 }
 
-// === 多模态文件处理逻辑 ===
-window.handleFileSelect = function (input, type) {
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-            currentMedia = {
-                type: type,
-                base64: e.target.result,
-                mimeType: file.type
-            };
-
-            const previewContent = document.getElementById('mediaPreviewContent');
-            previewContent.innerHTML = ''; // Clear previous
-
-            if (type === 'image') {
-                previewContent.innerHTML = `<img src="${currentMedia.base64}" style="max-height: 80px; border-radius: 8px; border: 1px solid #444;">`;
-            } else if (type === 'video') {
-                previewContent.innerHTML = `<video src="${currentMedia.base64}" controls style="max-height: 80px; border-radius: 8px; border: 1px solid #444;"></video>`;
-            } else if (type === 'audio') {
-                previewContent.innerHTML = `<audio src="${currentMedia.base64}" controls style="height: 40px;"></audio>`;
-            }
-
-            document.getElementById('mediaPreviewArea').style.display = 'block';
-        };
-
-        reader.readAsDataURL(file);
-    }
-};
-
-window.clearMediaSelection = function () {
-    currentMedia = { type: null, base64: null, mimeType: null };
-    document.getElementById('imageInput').value = '';
-    document.getElementById('videoInput').value = '';
-    document.getElementById('audioInput').value = '';
-    document.getElementById('mediaPreviewArea').style.display = 'none';
-    document.getElementById('mediaPreviewContent').innerHTML = '';
-};
-
-// Backward compatibility for image only (if needed, but we replaced the call in HTML)
-window.handleImageSelect = function (input) {
-    window.handleFileSelect(input, 'image');
-};
-window.clearImageSelection = window.clearMediaSelection;
-
 export async function sendMessage() {
     updateConfigFromUI();
     const input = document.getElementById('userInput');
     const msgText = input.value.trim();
 
-    if (!msgText && !currentMedia.base64) return;
+    if (!msgText && currentAttachments.length === 0) return;
 
-    // 构建消息内容 (统一用于 UI 显示和后端发送)
+    // 构建消息内容
     let messageContent;
-    if (currentMedia.base64) {
-        messageContent = [
-            { type: "text", text: msgText },
-            {
-                type: "image_url",
-                image_url: {
-                    url: currentMedia.base64
-                }
+
+    if (currentAttachments.length > 0) {
+        messageContent = [];
+        if (msgText) {
+            messageContent.push({ type: "text", text: msgText });
+        } else if (currentAttachments.length > 0 && !msgText) {
+            messageContent.push({ type: "text", text: "Sent attachments." });
+        }
+
+        currentAttachments.forEach(att => {
+            if (att.type === 'image') {
+                messageContent.push({
+                    type: "image_url",
+                    image_url: { url: att.base64 }
+                });
+            } else {
+                messageContent.push({
+                    type: "text",
+                    text: `[Attached ${att.type}: ${att.name}]`
+                });
             }
-        ];
+        });
     } else {
         messageContent = msgText;
     }
 
-    // 直接传递结构化内容给 UI
-    appendMessage('user', messageContent);
+    // UI Display logic
+    let uiContent = msgText;
+    if (currentAttachments.length > 0) {
+        const images = currentAttachments.filter(a => a.type === 'image').map(a => `<br><img src="${a.base64}" style="max-width: 200px; border-radius: 8px; margin-top: 5px;">`).join('');
+        const others = currentAttachments.filter(a => a.type !== 'image').map(a => `<br>[${a.type}: ${a.name}]`).join('');
+        uiContent = (uiContent || '') + images + others;
+    }
+
+    appendMessage('user', uiContent);
 
     input.value = '';
     window.clearMediaSelection();
@@ -178,14 +132,14 @@ function detachBubble(contentHtml) {
     bubble.style.top = '100px';
 
     bubble.innerHTML = `
-        <div class="floating-header" id="${bubbleId}-header">
-            <span class="floating-title">Floating Response</span>
-            <button class="floating-close" onclick="document.getElementById('${bubbleId}').remove()">×</button>
-        </div>
-        <div class="floating-content markdown-body">
-            ${marked.parse(contentHtml)}
-        </div>
-    `;
+    <div class="floating-header" id="${bubbleId}-header">
+        <span class="floating-title">Floating Response</span>
+        <button class="floating-close" onclick="document.getElementById('${bubbleId}').remove()">×</button>
+    </div>
+    <div class="floating-content markdown-body">
+        ${marked.parse(contentHtml)}
+    </div>
+`;
 
     container.appendChild(bubble);
 
