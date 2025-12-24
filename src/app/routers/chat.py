@@ -3,6 +3,7 @@
 聊天相关 API 路由
 """
 from typing import Dict, Any, List, Optional, Union
+import re  # 新增: 用于正则匹配图片
 
 from fastapi import APIRouter, HTTPException
 from openai import OpenAI
@@ -45,9 +46,9 @@ def _extract_last_user_query(messages: List[Dict[str, Any]]) -> str:
 
 
 def _prepare_messages_with_system_prompt(
-    messages: List[Dict[str, Any]],
-    kb_id: Optional[str],
-    user_query: str
+        messages: List[Dict[str, Any]],
+        kb_id: Optional[str],
+        user_query: str
 ) -> List[Dict[str, Any]]:
     """
     根据是否有知识库绑定，准备包含系统提示的消息列表
@@ -94,7 +95,9 @@ async def chat_endpoint(request: ChatRequest) -> Dict[str, str]:
         )
         final_content = response.choices[0].message.content
 
-        # 尝试解析 JSON 格式的非文本响应
+        # ==========================================
+        # 修改开始：使用正则和兼容逻辑处理 Base64 图片
+        # ==========================================
         try:
             import json
             import base64
@@ -105,49 +108,66 @@ async def chat_endpoint(request: ChatRequest) -> Dict[str, str]:
             generated_images_dir = STATIC_DIR / "generated_images"
             generated_images_dir.mkdir(exist_ok=True)
 
+            # 1. 预处理：如果是纯 JSON 格式（为了兼容某些旧模型输出），先将其转换为 Markdown 文本格式
+            # 这样后续就可以统一用正则来处理保存逻辑
             if final_content.strip().startswith("{") and final_content.strip().endswith("}"):
-                data = json.loads(final_content)
-                
-                # 处理 image 字段 (base64)
-                image_data_b64 = None
-                if "image" in data:
-                    image_data_b64 = data["image"]
-                elif "image_url" in data:
-                    # 有些模型可能返回 image_url 字段带 base64
-                    if data["image_url"].startswith("data:image"):
-                        image_data_b64 = data["image_url"]
-                    else:
-                        # 如果是真实 URL，直接使用
+                try:
+                    data = json.loads(final_content)
+                    # 检查是否有 image 字段
+                    if "image" in data:
+                        image_data = data["image"]
+                        # 如果没有 data:image 前缀，手动加上
+                        if not image_data.startswith("data:image"):
+                            image_data = f"data:image/png;base64,{image_data}"
+                        # 构造 Markdown 格式
+                        final_content = f"![Generated Image]({image_data})\n\n{data.get('text', '')}"
+                    # 检查是否有 image_url 字段且包含 base64
+                    elif "image_url" in data and data["image_url"].startswith("data:image"):
                         final_content = f"![Generated Image]({data['image_url']})\n\n{data.get('text', '')}"
+                except json.JSONDecodeError:
+                    pass  # 如果 JSON 解析失败，说明可能只是长得很像 JSON 的文本，继续往下走
 
-                if image_data_b64:
-                    # 提取 base64 数据
-                    if "base64," in image_data_b64:
-                        header, encoded = image_data_b64.split("base64,", 1)
-                        file_ext = "png"  # 默认
-                        if "image/jpeg" in header: file_ext = "jpg"
-                        elif "image/webp" in header: file_ext = "webp"
-                    else:
-                        encoded = image_data_b64
-                        file_ext = "png"
+            # 2. 定义正则回调函数：保存图片并替换链接
+            def save_base64_image_match(match):
+                alt_text = match.group(1)
+                file_ext = match.group(2)  # png, jpeg, webp
+                base64_str = match.group(3)
 
-                    # 保存到文件
-                    img_filename = f"gen_{uuid.uuid4().hex}.{file_ext}"
-                    img_path = generated_images_dir / img_filename
-                    
+                # 修正文件扩展名
+                if file_ext == "jpeg": file_ext = "jpg"
+
+                # 生成唯一文件名
+                img_filename = f"gen_{uuid.uuid4().hex}.{file_ext}"
+                img_path = generated_images_dir / img_filename
+
+                try:
+                    # 解码并保存
                     with open(img_path, "wb") as f:
-                        f.write(base64.b64decode(encoded))
-                    
-                    # 生成本地 URL
+                        f.write(base64.b64decode(base64_str))
+
+                    # 生成本地访问 URL
                     local_url = f"/static/generated_images/{img_filename}"
                     print(f"🖼️ Image saved to {local_url}")
 
-                    # 替换内容中的 base64 为 URL
-                    final_content = f"![Generated Image]({local_url})\n\n{data.get('text', '')}"
+                    # 返回替换后的 Markdown
+                    return f"![{alt_text}]({local_url})"
+                except Exception as save_err:
+                    print(f"Error saving extracted image: {save_err}")
+                    return match.group(0)  # 如果保存失败，返回原字符串
+
+            # 3. 使用正则全局替换
+            # 匹配模式: ![alt](data:image/ext;base64,DATA)
+            # 能够匹配 Markdown 图片，无论它在文本的开头、中间还是结尾
+            pattern = r'!\[(.*?)\]\(data:image\/(.*?);base64,([^\)]+)\)'
+
+            final_content = re.sub(pattern, save_base64_image_match, final_content)
 
         except Exception as e:
-            print(f"Error parsing/saving image: {e}")
-            pass # 解析失败则保留原始内容
+            print(f"Error parsing/saving image logic: {e}")
+            pass  # 解析失败则保留原始内容
+        # ==========================================
+        # 修改结束
+        # ==========================================
 
         new_history = request.messages + [{"role": "assistant", "content": final_content}]
         save_history(new_history, request.session_file)

@@ -8,3 +8,5 @@ storage
 # Python bytecode
 __pycache__/
 *.pyc
+*.ps1
+*.txt
