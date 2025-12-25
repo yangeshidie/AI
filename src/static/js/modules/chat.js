@@ -100,6 +100,13 @@ export async function sendMessage() {
         const data = await response.json();
         loadingDiv.remove();
 
+        if (!response.ok) {
+            const errorMsg = data.detail || data.error || `HTTP ${response.status}: ${response.statusText}`;
+            appendMessage('system', `Error: ${errorMsg}`);
+            console.error('API Error:', data);
+            return;
+        }
+
         if (data.content) {
             const contentDiv = appendMessage('assistant', data.content);
             addDetachButton(contentDiv.parentElement, data.content);
@@ -107,9 +114,11 @@ export async function sendMessage() {
             loadHistoryList();
         } else {
             appendMessage('system', 'Error: 无内容返回');
+            console.error('Invalid response:', data);
         }
     } catch (e) {
-        if (loadingDiv) loadingDiv.innerText = "Error: " + e;
+        if (loadingDiv) loadingDiv.innerText = "Error: " + e.message;
+        console.error('Request failed:', e);
     }
 }
 
