@@ -68,3 +68,16 @@ window.applyConfig = Settings.applyConfig;
 window.showAddConfigModal = Settings.showAddConfigModal;
 window.closeAddConfigModal = Settings.closeAddConfigModal;
 window.saveNewConfig = Settings.saveNewConfig;
+
+// 侧边栏
+window.toggleSidebar = function() {
+    const sidebar = document.getElementById('sidebar');
+    const icon = document.getElementById('sidebarToggleIcon');
+    sidebar.classList.toggle('collapsed');
+    
+    if (sidebar.classList.contains('collapsed')) {
+        icon.innerText = 'menu';
+    } else {
+        icon.innerText = 'menu_open';
+    }
+};
