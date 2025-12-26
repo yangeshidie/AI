@@ -52,6 +52,7 @@ class ChatRequest(BaseModel):
     messages: list
     session_file: str
     kb_id: Optional[str] = None
+    stream: bool = False
 
 
 class ModelListRequest(BaseModel):

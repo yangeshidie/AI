@@ -5,7 +5,8 @@ export const state = {
     conversationHistory: [],
     currentSessionFile: "",
     currentKB: null, // null = General Chat, Object = KB Chat
-    fileToDelete: null // 用于删除确认弹窗
+    fileToDelete: null, // 用于删除确认弹窗
+    streamEnabled: false // 流式传输开关，默认关闭
 };
 
 // 简单的 Setter 帮助函数

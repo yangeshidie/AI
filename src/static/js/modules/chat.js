@@ -13,6 +13,25 @@ export function updateConfigFromUI() {
     setConfig(newConfig);
 }
 
+export function toggleStream() {
+    state.streamEnabled = !state.streamEnabled;
+    const btn = document.getElementById('streamToggleBtn');
+    const icon = document.getElementById('streamIcon');
+    const text = document.getElementById('streamText');
+    
+    if (state.streamEnabled) {
+        btn.style.background = '#22c55e';
+        btn.style.color = 'white';
+        icon.innerText = 'check_circle';
+        text.innerText = '开启';
+    } else {
+        btn.style.background = '';
+        btn.style.color = '';
+        icon.innerText = 'block';
+        text.innerText = '关闭';
+    }
+}
+
 export function startNewChat(resetUI = true) {
     const now = new Date();
     setSessionFile(`chat_${now.getTime()}.json`);
@@ -36,7 +55,6 @@ export async function sendMessage() {
 
     if (!msgText && currentAttachments.length === 0) return;
 
-    // 构建消息内容
     let messageContent;
 
     if (currentAttachments.length > 0) {
@@ -64,7 +82,6 @@ export async function sendMessage() {
         messageContent = msgText;
     }
 
-    // UI Display logic
     let uiContent = msgText;
     if (currentAttachments.length > 0) {
         const images = currentAttachments.filter(a => a.type === 'image').map(a => `<br><img src="${a.base64}" style="max-width: 200px; border-radius: 8px; margin-top: 5px;">`).join('');
@@ -79,18 +96,104 @@ export async function sendMessage() {
 
     pushToHistory({ role: 'user', content: messageContent });
 
+    const payload = {
+        api_url: state.config.apiUrl,
+        api_key: state.config.apiKey,
+        model: state.config.model,
+        messages: state.conversationHistory,
+        session_file: state.currentSessionFile,
+        kb_id: state.currentKB ? state.currentKB.id : null,
+        stream: state.streamEnabled
+    };
+
+    if (state.streamEnabled) {
+        await sendStreamMessage(payload);
+    } else {
+        await sendNonStreamMessage(payload);
+    }
+}
+
+async function sendStreamMessage(payload) {
+    const loadingDiv = appendMessage('assistant', 'Thinking...', true);
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content markdown-body';
+    loadingDiv.appendChild(contentDiv);
+    
+    let fullContent = '';
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            const errorMsg = errorData.detail || errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+            loadingDiv.remove();
+            appendMessage('system', `Error: ${errorMsg}`);
+            console.error('API Error:', errorData);
+            return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const dataStr = line.slice(6);
+                    try {
+                        const data = JSON.parse(dataStr);
+                        
+                        if (data.error) {
+                            loadingDiv.remove();
+                            appendMessage('system', `Error: ${data.error}`);
+                            console.error('Stream Error:', data.error);
+                            return;
+                        }
+
+                        if (data.content) {
+                            fullContent += data.content;
+                            contentDiv.innerHTML = marked.parse(fullContent);
+                            
+                            contentDiv.querySelectorAll('pre code').forEach((block) => {
+                                hljs.highlightElement(block);
+                            });
+                        }
+
+                        if (data.done) {
+                            loadingDiv.remove();
+                            const finalContentDiv = appendMessage('assistant', data.content);
+                            addDetachButton(finalContentDiv.parentElement, data.content);
+                            pushToHistory({ role: 'assistant', content: data.content });
+                            loadHistoryList();
+                        }
+                    } catch (e) {
+                        console.error('Parse SSE data failed:', e, dataStr);
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        if (loadingDiv) loadingDiv.innerText = "Error: " + e.message;
+        console.error('Stream request failed:', e);
+    }
+}
+
+async function sendNonStreamMessage(payload) {
     const loadingDiv = appendMessage('assistant', 'Thinking...', true);
 
     try {
-        const payload = {
-            api_url: state.config.apiUrl,
-            api_key: state.config.apiKey,
-            model: state.config.model,
-            messages: state.conversationHistory,
-            session_file: state.currentSessionFile,
-            kb_id: state.currentKB ? state.currentKB.id : null
-        };
-
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import logging
+import os
 
 # 配置日志
 logging.basicConfig(
@@ -18,7 +19,9 @@ from app.routers import chat, files, kb, history, prompts, settings
 app = FastAPI(title="Nexus AI Local")
 
 # 1. 挂载静态文件
-app.mount("/static", StaticFiles(directory="static"), name="static")
+import os
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # 2. 注册路由
 app.include_router(chat.router)
@@ -31,7 +34,7 @@ app.include_router(settings.router)
 # 3. 根路径
 @app.get("/")
 async def read_index():
-    return FileResponse('static/index.html')
+    return FileResponse(os.path.join(os.path.dirname(__file__), "static", "index.html"))
 
 if __name__ == "__main__":
     import uvicorn

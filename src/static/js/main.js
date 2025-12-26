@@ -30,6 +30,7 @@ window.saveConfig = Chat.saveConfig;
 window.handleFileSelect = Chat.handleFileSelect;
 window.handleFileSelect = handleFileSelect;
 window.clearMediaSelection = Chat.clearMediaSelection;
+window.toggleStream = Chat.toggleStream;
 
 // 知识库 KB
 window.loadKBList = KB.loadKBList;
