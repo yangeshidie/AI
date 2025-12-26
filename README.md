@@ -456,7 +456,7 @@ A: 应用会自动检测代理（端口 7890）。如果检测到代理，会自
 ## 联系方式
 
 - 作者：2813204478@qq.com
-- 项目地址：[GitHub Repository]
+- 项目地址：[[GitHub Repository](https://github.com/yangeshidie/AI)]
 
 ## 更新日志
 
