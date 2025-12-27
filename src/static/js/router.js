@@ -1,5 +1,8 @@
 // static/js/router.js
 
+import { loadKBList } from './modules/kb.js';
+import { loadRootFiles } from './modules/files.js';
+
 export async function switchView(viewName) {
     // 隐藏所有 View
     document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -15,12 +18,10 @@ export async function switchView(viewName) {
     if (viewName === 'chat') btns[0].classList.add('active');
     if (viewName === 'agents') {
         btns[1].classList.add('active');
-        const { loadKBList } = await import('./modules/kb.js');
         loadKBList();
     }
     if (viewName === 'library') {
         btns[2].classList.add('active');
-        const { loadRootFiles } = await import('./modules/files.js');
         loadRootFiles();
     }
     if (viewName === 'settings') btns[3].classList.add('active');

@@ -1,5 +1,6 @@
 import { appendMessage } from '../utils.js';
 import { state, setSessionFile, clearHistory, pushToHistory, setCurrentKB } from '../state.js';
+import { startNewChat } from './chat.js';
 
 export function toggleHistory() {
     document.getElementById('historyDrawer').classList.toggle('open');
@@ -52,7 +53,7 @@ export async function loadSession(filepath) {
         // 恢复状态
         clearHistory();
         historyData.forEach(msg => pushToHistory(msg));
-        setSessionFile(filepath.split('/').pop());
+        setSessionFile(filepath);
 
         // UI 恢复
         document.getElementById('chatBox').innerHTML = '';
@@ -91,7 +92,6 @@ export async function deleteHistory(fullPath) {
         });
         loadHistoryList();
         if (state.currentSessionFile && state.currentSessionFile.includes(fullPath.split('/')[1])) {
-            const { startNewChat } = await import('./chat.js');
             startNewChat();
         }
     } catch (e) { alert("失败: " + e); }

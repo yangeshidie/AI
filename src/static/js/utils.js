@@ -1,4 +1,5 @@
 // static/js/utils.js
+import { state } from './state.js';
 
 // 初始化 Markdown
 export function initMarkdown() {
@@ -16,6 +17,8 @@ export function appendMessage(role, text, raw = false) {
 
     const wrapper = document.createElement('div');
     wrapper.className = `message ${role}`;
+    wrapper.dataset.messageId = Date.now() + Math.random().toString(36).substr(2, 9);
+    wrapper.dataset.messageRole = role;
 
     const contentDiv = document.createElement('div');
     contentDiv.className = 'msg-content';
@@ -128,8 +131,22 @@ export function appendMessage(role, text, raw = false) {
             });
         };
 
+        // Edit Button
+        const editBtn = document.createElement('button');
+        editBtn.className = 'copy-btn edit-btn';
+        editBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px">edit</span> 编辑';
+        editBtn.onclick = () => openEditMessageModal(wrapper, text);
+
+        // Delete Button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'copy-btn delete-btn';
+        deleteBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px">delete</span> 删除';
+        deleteBtn.onclick = () => deleteMessage(wrapper);
+
         copyToolbar.appendChild(copyTextBtn);
         copyToolbar.appendChild(copyMdBtn);
+        copyToolbar.appendChild(editBtn);
+        copyToolbar.appendChild(deleteBtn);
         contentDiv.appendChild(copyToolbar);
     }
 
@@ -151,3 +168,155 @@ export function closeModal(modalId) {
 export function openModal(modalId) {
     document.getElementById(modalId).classList.add('show');
 }
+
+// 编辑消息模态框
+window.openEditMessageModal = function(messageWrapper, text) {
+    const messageId = messageWrapper.dataset.messageId;
+    const messageRole = messageWrapper.dataset.messageRole;
+    
+    let contentText = '';
+    if (Array.isArray(text)) {
+        contentText = text.filter(t => t.type === 'text').map(t => t.text).join('\n');
+    } else {
+        contentText = text;
+    }
+    
+    document.getElementById('editMessageId').value = messageId;
+    document.getElementById('editMessageRole').value = messageRole;
+    document.getElementById('editMessageContent').value = contentText;
+    
+    openModal('editMessageModal');
+};
+
+window.closeEditMessageModal = function() {
+    closeModal('editMessageModal');
+    document.getElementById('editMessageContent').value = '';
+};
+
+window.saveEditedMessage = async function() {
+    const messageId = document.getElementById('editMessageId').value;
+    const messageRole = document.getElementById('editMessageRole').value;
+    const newContent = document.getElementById('editMessageContent').value.trim();
+    
+    if (!newContent) {
+        alert('消息内容不能为空');
+        return;
+    }
+    
+    const messageWrapper = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (!messageWrapper) {
+        alert('找不到要编辑的消息');
+        return;
+    }
+    
+    // 获取当前会话文件
+    const sessionFile = state.currentSessionFile;
+    
+    if (!sessionFile) {
+        alert('无法获取会话信息');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/edit_message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message_id: messageId,
+                role: messageRole,
+                content: newContent,
+                session_file: sessionFile
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || errorData.error || '编辑失败');
+        }
+        
+        const result = await response.json();
+        
+        // 更新UI
+        const bodyDiv = messageWrapper.querySelector('.msg-body');
+        bodyDiv.innerHTML = marked.parse(newContent);
+        bodyDiv.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+        });
+        
+        // 重新渲染LaTeX
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(bodyDiv, {
+                delimiters: [
+                    { left: '$$', right: '$$', display: true },
+                    { left: '$', right: '$', display: false },
+                    { left: '\\[', right: '\\]', display: true },
+                    { left: '\\(', right: '\\)', display: false }
+                ],
+                throwOnError: false
+            });
+        }
+        
+        closeEditMessageModal();
+        
+    } catch (error) {
+        console.error('编辑消息失败:', error);
+        alert('编辑消息失败: ' + error.message);
+    }
+};
+
+// 删除消息
+window.deleteMessage = async function(messageWrapper) {
+    const messageId = messageWrapper.dataset.messageId;
+    const messageRole = messageWrapper.dataset.messageRole;
+    
+    if (!confirm(`确定要删除这条${messageRole === 'user' ? '用户' : 'AI'}消息吗？`)) {
+        return;
+    }
+    
+    // 获取当前会话文件
+    const sessionFile = state.currentSessionFile;
+    
+    if (!sessionFile) {
+        alert('无法获取会话信息');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/delete_message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message_id: messageId,
+                role: messageRole,
+                session_file: sessionFile
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || errorData.error || '删除失败');
+        }
+        
+        const result = await response.json();
+        
+        // 从UI中移除消息
+        messageWrapper.remove();
+        
+        // 更新state.conversationHistory，移除已删除的消息
+        state.conversationHistory = state.conversationHistory.filter(msg => 
+            !(msg.id === messageId && msg.role === messageRole)
+        );
+        
+        // 如果没有消息了，显示欢迎语
+        const chatBox = document.getElementById('chatBox');
+        const messages = chatBox.querySelectorAll('.message');
+        if (messages.length === 0) {
+            const welcome = document.querySelector('.welcome-banner');
+            if (welcome) welcome.style.display = 'block';
+        }
+        
+    } catch (error) {
+        console.error('删除消息失败:', error);
+        alert('删除消息失败: ' + error.message);
+    }
+};

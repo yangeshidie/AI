@@ -374,6 +374,28 @@
         </div>
     </div>
 
+    <!-- Edit Message Modal -->
+    <div id="editMessageModal" class="modal-backdrop">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>编辑消息</h3>
+                <button class="close-icon" onclick="closeEditMessageModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>消息内容</label>
+                    <textarea id="editMessageContent" class="input-dark" rows="6" placeholder="编辑消息内容..."></textarea>
+                </div>
+                <input type="hidden" id="editMessageId">
+                <input type="hidden" id="editMessageRole">
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" onclick="closeEditMessageModal()">取消</button>
+                <button class="primary-btn" onclick="saveEditedMessage()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="/static/js/main.js"></script>
 </body>
 

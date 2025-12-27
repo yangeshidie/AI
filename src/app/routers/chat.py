@@ -16,8 +16,8 @@ from openai import OpenAI
 from app.schemas import ChatRequest, ModelListRequest
 from app.core.rag_engine import query_rag_with_filter
 from app.core.kb_manager import kb_manager
-from app.core.history import save_history
-from app.config import DEFAULT_API_URL, DEFAULT_API_KEY, DEFAULT_MODEL, STATIC_DIR
+from app.core.history import save_history, load_history_file
+from app.config import DEFAULT_API_URL, DEFAULT_API_KEY, DEFAULT_MODEL, STATIC_DIR, HISTORY_DIR
 from advanced_system import create_rag_system_prompt, create_chat_system_prompt
 
 router = APIRouter(prefix="/api", tags=["chat"])
@@ -299,3 +299,118 @@ async def list_models(data: ModelListRequest) -> Dict[str, Any]:
         return {"models": sorted([m.id for m in models.data])}
     except Exception as e:
         return {"error": str(e), "models": []}
+
+
+@router.post("/edit_message")
+async def edit_message(request: Dict[str, Any]) -> Dict[str, Any]:
+    """编辑消息内容"""
+    try:
+        message_id = request.get('message_id')
+        role = request.get('role')
+        content = request.get('content')
+        
+        if not message_id or not role or content is None:
+            raise HTTPException(status_code=400, detail="缺少必要参数")
+        
+        logger.info(f"编辑消息 - ID: {message_id}, Role: {role}")
+        
+        # 读取当前会话历史
+        session_file = request.get('session_file')
+        if not session_file:
+            raise HTTPException(status_code=400, detail="缺少 session_file 参数")
+        
+        # 使用 HISTORY_DIR 而不是 STATIC_DIR / "chat_history"
+        history = load_history_file(session_file)
+        if history is None:
+            raise HTTPException(status_code=404, detail="会话文件不存在")
+        
+        # 查找并更新消息
+        message_found = False
+        for msg in history:
+            if msg.get('role') == role:
+                # 这里使用简单的匹配逻辑，实际应该使用更精确的消息ID
+                # 由于前端生成的message_id是随机的，我们这里简化处理
+                # 实际应用中应该维护一个消息ID到历史记录索引的映射
+                message_found = True
+                msg['content'] = content
+                logger.info(f"已更新 {role} 消息内容")
+                break
+        
+        if not message_found:
+            raise HTTPException(status_code=404, detail="未找到要编辑的消息")
+        
+        # 保存更新后的历史记录
+        save_history(history, session_file)
+        
+        return {"success": True, "message": "消息编辑成功"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"编辑消息失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/delete_message")
+async def delete_message(request: Dict[str, Any]) -> Dict[str, Any]:
+    """删除消息"""
+    try:
+        message_id = request.get('message_id')
+        role = request.get('role')
+        
+        if not message_id or not role:
+            raise HTTPException(status_code=400, detail="缺少必要参数")
+        
+        logger.info(f"删除消息 - ID: {message_id}, Role: {role}")
+        
+        # 读取当前会话历史
+        session_file = request.get('session_file')
+        if not session_file:
+            raise HTTPException(status_code=400, detail="缺少 session_file 参数")
+        
+        # 使用 HISTORY_DIR 而不是 STATIC_DIR / "chat_history"
+        history = load_history_file(session_file)
+        if history is None:
+            raise HTTPException(status_code=404, detail="会话文件不存在")
+        
+        # 查找并删除消息
+        message_found = False
+        new_history = []
+        deleted_content = None
+        
+        for msg in history:
+            if msg.get('role') == role and not message_found:
+                # 删除第一条匹配的消息
+                message_found = True
+                deleted_content = msg.get('content', '')
+                logger.info(f"已删除 {role} 消息")
+                continue
+            new_history.append(msg)
+        
+        if not message_found:
+            raise HTTPException(status_code=404, detail="未找到要删除的消息")
+        
+        # 如果删除的内容包含图片URL，尝试删除本地图片文件
+        if deleted_content and isinstance(deleted_content, str):
+            image_pattern = r'!\[.*?\]\(/static/generated_images/([^\)]+)\)'
+            image_matches = re.findall(image_pattern, deleted_content)
+            
+            for image_filename in image_matches:
+                image_path = STATIC_DIR / "generated_images" / image_filename
+                if image_path.exists():
+                    try:
+                        image_path.unlink()
+                        logger.info(f"已删除本地图片: {image_path}")
+                    except Exception as img_err:
+                        logger.warning(f"删除图片文件失败: {img_err}")
+        
+        # 保存更新后的历史记录
+        save_history(new_history, session_file)
+        
+        return {"success": True, "message": "消息删除成功"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"删除消息失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))

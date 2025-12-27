@@ -18,17 +18,22 @@ def save_history(messages: List[Dict[str, Any]], filename: str) -> None:
 
     Args:
         messages: 消息列表
-        filename: 文件名（不含路径）
+        filename: 文件名或完整路径（如 "chat_123.json" 或 "2025-12-27/chat_123.json"）
     """
-    now = datetime.datetime.now()
-    date_str = now.strftime("%Y-%m-%d")
-    save_dir = HISTORY_DIR / date_str
-    save_dir.mkdir(parents=True, exist_ok=True)
+    # 如果 filename 包含日期目录，直接使用；否则创建新的日期目录
+    if '/' in filename:
+        file_path = HISTORY_DIR / filename
+    else:
+        now = datetime.datetime.now()
+        date_str = now.strftime("%Y-%m-%d")
+        save_dir = HISTORY_DIR / date_str
+        save_dir.mkdir(parents=True, exist_ok=True)
 
-    if not filename.endswith('.json'):
-        filename += '.json'
+        if not filename.endswith('.json'):
+            filename += '.json'
 
-    file_path = save_dir / filename
+        file_path = save_dir / filename
+
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(messages, f, ensure_ascii=False, indent=2)
 

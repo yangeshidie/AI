@@ -34,7 +34,8 @@ export function toggleStream() {
 
 export function startNewChat(resetUI = true) {
     const now = new Date();
-    setSessionFile(`chat_${now.getTime()}.json`);
+    const dateStr = now.toISOString().split('T')[0];
+    setSessionFile(`${dateStr}/chat_${now.getTime()}.json`);
     clearHistory();
     document.getElementById('chatBox').innerHTML = '';
 
