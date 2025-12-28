@@ -5,67 +5,81 @@ Nexus AI Local 是一个功能强大的本地 LLM API 调用与管理平台。�
 ## 功能特性
 
 ### 对话系统
-- 多模型支持：兼容 OpenAI 格式的 API，支持流式和非流式对话
-- 实时模型切换：无需重启即可切换不同的 LLM 模型
-- 流式传输控制：全局开关控制是否启用流式输出
-- 对话历史管理：自动保存和加载对话历史
-- 多模态支持：支持文本和图片输入
-- 图片生成：支持 Base64 图片自动保存和本地存储
-- 超时控制：5分钟超时设置，适合长图片生成任务
+- **多模型支持**：兼容 OpenAI 格式的 API，支持流式和非流式对话
+- **实时模型切换**：无需重启即可切换不同的 LLM 模型
+- **流式传输控制**：全局开关控制是否启用流式输出
+- **对话历史管理**：自动保存和加载对话历史
+- **多模态支持**：支持文本和图片输入
+- **图片生成与存储**：支持 Base64 图片自动保存和本地存储
+- **超时控制**：5分钟超时设置，适合长图片生成任务
+- **消息编辑与删除**：支持编辑和删除历史消息
 
 ### RAG 知识库
-- 多格式文件上传：支持 PDF、TXT、MD 等多种格式
-- 本地向量检索：基于 ChromaDB 的本地向量数据库
-- 智能分块：自动将文档分块存储，提高检索精度
-- 动态智能体：创建具有特定知识背景的 AI 助手
-- 知识库管理：支持知识库的创建、删除和查询
+- **多格式文件上传**：支持 PDF、TXT、MD 等多种格式
+- **本地向量检索**：基于 ChromaDB 的本地向量数据库
+- **智能分块**：自动将文档分块存储，提高检索精度
+- **动态智能体**：创建具有特定知识背景的 AI 助手
+- **知识库管理**：支持知识库的创建、删除和查询
+- **文件分组管理**：支持文件分组和批量操作
 
 ### 智能体系统
-- 角色定义：为智能体设定特定的角色和性格
-- 知识库挂载：将特定知识库挂载到智能体
-- 系统提示词：自定义智能体的行为模式
-- 智能体库：管理和复用创建的智能体
+- **角色定义**：为智能体设定特定的角色和性格
+- **知识库挂载**：将特定知识库挂载到智能体
+- **系统提示词**：自定义智能体的行为模式
+- **智能体库**：管理和复用创建的智能体
 
 ### 提示词管理
-- 本地存储：常用提示词本地保存
-- 快速调用：一键调用预设提示词
-- 增删改查：完整的提示词管理功能
-- 分类管理：支持提示词分类和标签
+- **本地存储**：常用提示词本地保存
+- **快速调用**：一键调用预设提示词
+- **增删改查**：完整的提示词管理功能
+- **分类管理**：支持提示词分类和标签
+
+### 配置管理
+- **多配置预设**：支持保存多个 API 配置
+- **配置快速切换**：一键切换不同的 API 配置
+- **自动模型列表**：自动获取可用模型列表
 
 ### 富文本体验
-- Markdown 渲染：实时渲染 Markdown 格式文本
-- 代码高亮：支持多种编程语言的语法高亮
-- LaTeX 公式：支持数学公式显示和渲染
-- 可拖拽输入框：灵活调整输入区域大小
-- 响应式设计：适配不同屏幕尺寸
+- **Markdown 渲染**：实时渲染 Markdown 格式文本
+- **代码高亮**：支持多种编程语言的语法高亮
+- **LaTeX 公式**：支持数学公式显示和渲染
+- **可拖拽输入框**：灵活调整输入区域大小
+- **响应式设计**：适配不同屏幕尺寸
 
 ### 本地化存储
-- 完全本地运行：不上传任何数据到云端（除非配置的 API 是云端服务）
-- 隐私保护：对话历史、知识库、提示词均存储在本地
-- 数据持久化：自动保存所有用户数据
+- **完全本地运行**：不上传任何数据到云端（除非配置的 API 是云端服务）
+- **隐私保护**：对话历史、知识库、提示词均存储在本地
+- **数据持久化**：自动保存所有用户数据
 
 ## 技术架构
 
 ### 后端技术栈
-- Python 3.10+
-- FastAPI：高性能 Web 框架
-- OpenAI SDK：LLM API 调用
-- ChromaDB：向量数据库
-- SentenceTransformers：文本向量化
-- PyPDF：PDF 文档解析
-- DuckDuckGo Search：网络搜索集成
+- **Python 3.10+**：核心编程语言
+- **FastAPI**：高性能 Web 框架
+- **OpenAI SDK**：LLM API 调用
+- **ChromaDB**：向量数据库
+- **SentenceTransformers**：文本向量化
+- **PyPDF/PyPDF2**：PDF 文档解析
+- **DuckDuckGo Search**：网络搜索集成
+- **Pydantic**：数据验证和序列化
 
 ### 前端技术栈
-- HTML5：页面结构
-- CSS3：样式设计
-- Vanilla JavaScript (ES6+)：交互逻辑
-- Marked.js：Markdown 渲染
-- Highlight.js：代码高亮
-- KaTeX：LaTeX 公式渲染
-- Material Symbols：图标库
+- **HTML5**：页面结构
+- **CSS3**：样式设计（支持 CSS 变量和 Flexbox/Grid）
+- **Vanilla JavaScript (ES6+)**：交互逻辑
+- **Marked.js**：Markdown 渲染
+- **Highlight.js**：代码高亮
+- **KaTeX**：LaTeX 公式渲染
+- **Material Symbols**：图标库
 
 ### 包管理
-- Poetry：Python 依赖管理和虚拟环境
+- **Poetry**：Python 依赖管理和虚拟环境
+
+### 架构设计原则
+- **SOLID 原则**：严格遵循开闭原则、单一职责原则等
+- **高内聚低耦合**：模块化设计，清晰的职责划分
+- **依赖注入**：使用依赖注入提高可测试性
+- **类型安全**：使用 Pydantic 和 Type Hints 确保类型安全
 
 ## 快速开始
 
@@ -116,12 +130,12 @@ python main.py
 ### 首次配置
 
 首次访问时，请在**设置**页面配置你的 API 信息：
-- API Endpoint：你的 LLM API 地址
+- **API Endpoint**：你的 LLM API 地址
   - OpenAI: `https://api.openai.com/v1`
   - 本地 Ollama: `http://localhost:11434/v1`
   - 其他兼容 OpenAI 格式的 API
-- API Key：你的 API 密钥
-- 默认模型：选择默认使用的模型
+- **API Key**：你的 API 密钥
+- **默认模型**：选择默认使用的模型
 
 ## 使用指南
 
@@ -134,19 +148,30 @@ python main.py
    - 关闭：等待完整响应后一次性显示
 4. **图片输入**：点击图片图标上传图片，支持多模态对话
 5. **查看历史**：左侧历史列表查看和切换对话历史
+6. **编辑消息**：点击消息旁的编辑按钮修改内容
+7. **删除消息**：点击消息旁的删除按钮移除消息
 
 ### 知识库管理
 
 1. **上传文件**：在根数据库页面上传 PDF、TXT、MD 等文件
-2. **创建智能体**：在智能体库页面创建新的智能体
-3. **挂载知识库**：为智能体选择要挂载的知识库
-4. **使用智能体**：在对话中选择使用特定智能体
+2. **文件分组**：为文件设置分组标签，便于管理
+3. **创建智能体**：在智能体库页面创建新的智能体
+4. **挂载知识库**：为智能体选择要挂载的知识库
+5. **使用智能体**：在对话中选择使用特定智能体
 
 ### 提示词管理
 
 1. **创建提示词**：在提示词库页面添加新提示词
 2. **分类管理**：为提示词添加分类和标签
 3. **快速调用**：在对话中快速调用预设提示词
+4. **保存当前提示词**：将输入框中的内容保存为提示词
+
+### 配置管理
+
+1. **添加配置**：在设置页面添加新的 API 配置
+2. **切换配置**：从下拉菜单快速切换不同配置
+3. **刷新模型列表**：点击刷新按钮获取最新可用模型
+4. **保存配置**：保存当前配置到本地存储
 
 ## API 文档
 
@@ -165,21 +190,64 @@ python main.py
     {"role": "user", "content": "Hello"}
   ],
   "stream": true,
-  "kb_id": null
+  "kb_id": null,
+  "session_file": "chat_123.json"
 }
 ```
 
 **响应（流式）：**
 ```
 data: {"content": "Hello"}
-data: {"done": true, "content": "Hello! How can I help you?"}
+data: {"done": true, "content": "Hello! How can I help you?", "id": "assistant_id"}
 ```
 
 **响应（非流式）：**
 ```json
 {
   "role": "assistant",
-  "content": "Hello! How can I help you?"
+  "content": "Hello! How can I help you?",
+  "id": "assistant_id"
+}
+```
+
+#### POST /api/edit_message
+编辑消息内容
+
+**请求体：**
+```json
+{
+  "message_id": "msg_123",
+  "role": "assistant",
+  "content": "Updated content",
+  "session_file": "chat_123.json"
+}
+```
+
+**响应：**
+```json
+{
+  "success": true,
+  "message": "消息编辑成功"
+}
+```
+
+#### POST /api/delete_message
+删除消息
+
+**请求体：**
+```json
+{
+  "message_id": "msg_123",
+  "role": "assistant",
+  "session_file": "chat_123.json"
+}
+```
+
+**响应：**
+```json
+{
+  "success": true,
+  "message": "消息删除成功"
 }
 ```
 
@@ -203,14 +271,42 @@ data: {"done": true, "content": "Hello! How can I help you?"}
 }
 ```
 
+#### GET /api/config
+获取默认 API 配置
+
+**响应：**
+```json
+{
+  "api_url": "https://api.openai.com/v1",
+  "api_key": "",
+  "model": "gpt-3.5-turbo"
+}
+```
+
 ### 知识库管理
 
-#### POST /api/kb/upload
-上传文件到知识库
+#### POST /api/kb/create
+创建新知识库
 
-**请求：** multipart/form-data
-- file: 文件
-- kb_id: 知识库 ID
+**请求体：**
+```json
+{
+  "name": "My Knowledge Base",
+  "description": "Description of the knowledge base",
+  "files": ["doc1.pdf", "doc2.txt"]
+}
+```
+
+**响应：**
+```json
+{
+  "id": "kb_001",
+  "name": "My Knowledge Base",
+  "description": "Description of the knowledge base",
+  "files": ["doc1.pdf", "doc2.txt"],
+  "created_at": "2025-12-28 10:00"
+}
+```
 
 #### GET /api/kb/list
 获取知识库列表
@@ -222,9 +318,101 @@ data: {"done": true, "content": "Hello! How can I help you?"}
     {
       "id": "kb_001",
       "name": "My Knowledge Base",
-      "files": ["doc1.pdf", "doc2.txt"]
+      "description": "Description",
+      "files": ["doc1.pdf"],
+      "created_at": "2025-12-28 10:00"
     }
   ]
+}
+```
+
+#### POST /api/kb/delete
+删除知识库
+
+**请求体：**
+```json
+{
+  "kb_id": "kb_001"
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success"
+}
+```
+
+### 文件管理
+
+#### POST /api/files/upload
+上传文件到根数据库
+
+**请求：** multipart/form-data
+- file: 文件
+- group: 分组名称（可选）
+
+**响应：**
+```json
+{
+  "filename": "uploaded.pdf",
+  "size": 1024,
+  "chunks_added": 5
+}
+```
+
+#### POST /api/files/rename
+重命名文件
+
+**请求体：**
+```json
+{
+  "filename": "old.pdf",
+  "new_name": "new.pdf"
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success"
+}
+```
+
+#### POST /api/files/delete
+删除文件
+
+**请求体：**
+```json
+{
+  "filename": "doc.pdf",
+  "confirm_delete": true
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success",
+  "affected_agents": ["Agent1", "Agent2"]
+}
+```
+
+#### POST /api/files/set_group
+设置文件分组
+
+**请求体：**
+```json
+{
+  "filename": "doc.pdf",
+  "group": "Documents"
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success"
 }
 ```
 
@@ -238,7 +426,7 @@ data: {"done": true, "content": "Hello! How can I help you?"}
 {
   "sessions": [
     {
-      "id": "chat_123",
+      "filename": "chat_123.json",
       "title": "First Conversation",
       "created_at": "2025-12-26T10:00:00"
     }
@@ -246,8 +434,15 @@ data: {"done": true, "content": "Hello! How can I help you?"}
 }
 ```
 
-#### GET /api/history/{session_id}
-获取特定对话历史
+#### POST /api/history/load
+加载特定对话历史
+
+**请求体：**
+```json
+{
+  "filepath": "chat_123.json"
+}
+```
 
 **响应：**
 ```json
@@ -256,6 +451,97 @@ data: {"done": true, "content": "Hello! How can I help you?"}
     {"role": "user", "content": "Hello"},
     {"role": "assistant", "content": "Hi there!"}
   ]
+}
+```
+
+#### POST /api/history/rename
+重命名历史记录
+
+**请求体：**
+```json
+{
+  "filename": "chat_123.json",
+  "new_name": "New Title"
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success"
+}
+```
+
+#### POST /api/history/delete
+删除历史记录
+
+**请求体：**
+```json
+{
+  "filename": "chat_123.json"
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success"
+}
+```
+
+### 提示词管理
+
+#### GET /api/prompts/list
+获取提示词列表
+
+**响应：**
+```json
+{
+  "prompts": [
+    {
+      "id": "prompt_001",
+      "title": "Code Review",
+      "content": "Please review the following code...",
+      "category": "Development"
+    }
+  ]
+}
+```
+
+#### POST /api/prompts/add
+添加新提示词
+
+**请求体：**
+```json
+{
+  "title": "New Prompt",
+  "content": "Prompt content here",
+  "category": "General"
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success",
+  "id": "prompt_002"
+}
+```
+
+#### POST /api/prompts/delete
+删除提示词
+
+**请求体：**
+```json
+{
+  "id": "prompt_001"
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success"
 }
 ```
 
@@ -302,7 +588,8 @@ data: {"done": true, "content": "Hello! How can I help you?"}
     │   ├── .gitignore
     │   │
     │   ├── css/                # 样式文件
-    │   │   └── style.css
+    │   │   ├── style.css
+    │   │   └── style-new.css
     │   │
     │   └── js/                 # JavaScript 模块
     │       ├── main.js         # 主入口
@@ -323,6 +610,7 @@ data: {"done": true, "content": "Hello! How can I help you?"}
     ├── history/                # 对话历史存储（自动生成）
     ├── data_uploads/           # 上传文件存储（自动生成）
     ├── chroma_db/              # 向量数据库存储（自动生成）
+    ├── kb_metadata.json        # 知识库元数据（自动生成）
     └── static/generated_images/ # 生成的图片存储（自动生成）
 ```
 
@@ -388,6 +676,7 @@ A: 备份以下目录：
 - `src/storage/`：提示词和配置
 - `src/chroma_db/`：向量数据库
 - `src/data_uploads/`：上传的文件
+- `src/kb_metadata.json`：知识库元数据
 
 ### Q: 如何重置应用？
 
@@ -396,6 +685,7 @@ A: 删除以下目录并重启应用：
 - `src/storage/`
 - `src/chroma_db/`
 - `src/data_uploads/`
+- `src/kb_metadata.json`
 
 ### Q: 支持哪些文件格式？
 
@@ -409,11 +699,16 @@ A: 目前支持：
 
 A: 应用会自动检测代理（端口 7890）。如果检测到代理，会自动配置使用代理访问 Hugging Face；否则使用国内镜像。
 
+### Q: 如何保存多个 API 配置？
+
+A: 在设置页面点击"新增"按钮，添加新的配置预设。配置会保存到本地存储，可以通过下拉菜单快速切换。
+
 ## 性能优化
 
 ### RAG 检索优化
 - 调整分块大小：在 `rag_engine.py` 中修改 `chunk_size` 参数
 - 选择合适的嵌入模型：在 `rag_engine.py` 中修改 `model_name`
+- 限制返回结果数量：在 `rag_engine.py` 中修改 `n_results` 参数
 
 ### 图片生成优化
 - 调整超时时间：在 `chat.py` 中修改 `timeout` 参数
@@ -431,6 +726,48 @@ A: 应用会自动检测代理（端口 7890）。如果检测到代理，会自
 - 使用强密码保护 API Key
 - 限制文件上传大小
 - 验证用户输入
+- 使用 HTTPS 部署（生产环境）
+
+## 部署
+
+### 本地部署
+
+```bash
+cd src
+poetry run python main.py
+```
+
+### Docker 部署（推荐）
+
+创建 `Dockerfile`：
+
+```dockerfile
+FROM python:3.10-slim
+
+WORKDIR /app
+
+COPY pyproject.toml poetry.lock ./
+RUN pip install poetry && poetry install --no-root
+
+COPY src/ ./src/
+
+CMD ["poetry", "run", "python", "src/main.py"]
+```
+
+构建并运行：
+
+```bash
+docker build -t nexus-ai .
+docker run -p 8000:8000 -v $(pwd)/src/history:/app/src/history nexus-ai
+```
+
+### 生产环境部署
+
+- 使用 Gunicorn + Uvicorn Workers
+- 配置 Nginx 反向代理
+- 启用 HTTPS
+- 配置日志轮转
+- 设置监控和告警
 
 ## 贡献指南
 
@@ -456,7 +793,7 @@ A: 应用会自动检测代理（端口 7890）。如果检测到代理，会自
 ## 联系方式
 
 - 作者：2813204478@qq.com
-- 项目地址：[[GitHub Repository](https://github.com/yangeshidie/AI)]
+- 项目地址：[GitHub Repository](https://github.com/yangeshidie/AI)
 
 ## 更新日志
 
@@ -469,3 +806,6 @@ A: 应用会自动检测代理（端口 7890）。如果检测到代理，会自
 - 支持流式和非流式传输
 - 添加图片生成和存储功能
 - 实现代码高亮和 LaTeX 公式渲染
+- 添加配置预设管理功能
+- 支持消息编辑和删除
+- 添加文件分组功能
