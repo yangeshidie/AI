@@ -97,6 +97,13 @@ export async function sendMessage() {
 
     pushToHistory({ role: 'user', content: messageContent });
 
+    // 如果没有会话文件，创建一个新的会话文件名
+    if (!state.currentSessionFile) {
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        setSessionFile(`${dateStr}/chat_${now.getTime()}.json`);
+    }
+
     const payload = {
         api_url: state.config.apiUrl,
         api_key: state.config.apiKey,

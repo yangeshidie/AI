@@ -20,9 +20,15 @@ def save_history(messages: List[Dict[str, Any]], filename: str) -> None:
         messages: 消息列表
         filename: 文件名或完整路径（如 "chat_123.json" 或 "2025-12-27/chat_123.json"）
     """
+    # 验证文件名不为空
+    if not filename or not filename.strip():
+        raise ValueError("文件名不能为空")
+    
     # 如果 filename 包含日期目录，直接使用；否则创建新的日期目录
     if '/' in filename:
         file_path = HISTORY_DIR / filename
+        # 确保目录存在
+        file_path.parent.mkdir(parents=True, exist_ok=True)
     else:
         now = datetime.datetime.now()
         date_str = now.strftime("%Y-%m-%d")
