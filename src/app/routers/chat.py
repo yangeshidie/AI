@@ -4,10 +4,12 @@
 """
 import logging
 from typing import Dict, Any, List, Optional, Union, AsyncGenerator
-import re  # 新增: 用于正则匹配图片
+import re
 import json
 import base64
 import uuid
+import time
+import random
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -224,11 +226,12 @@ async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any
         
         processed_content = _process_image_content(full_content)
         
-        new_history = original_messages + [{"role": "assistant", "content": processed_content}]
+        assistant_id = str(int(time.time() * 1000)) + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=9))
+        new_history = original_messages + [{"role": "assistant", "content": processed_content, "id": assistant_id}]
         save_history(new_history, session_file)
         logger.info(f"历史记录已保存到: {session_file}")
         
-        yield f"data: {json.dumps({'done': True, 'content': processed_content}, ensure_ascii=False)}\n\n"
+        yield f"data: {json.dumps({'done': True, 'content': processed_content, 'id': assistant_id}, ensure_ascii=False)}\n\n"
         
     except Exception as e:
         logger.error(f"流式响应处理失败: {e}", exc_info=True)
@@ -274,12 +277,13 @@ async def _non_stream_chat_response(client, model: str, messages: List[Dict[str,
 
         final_content = _process_image_content(final_content)
 
-        new_history = original_messages + [{"role": "assistant", "content": final_content}]
+        assistant_id = str(int(time.time() * 1000)) + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=9))
+        new_history = original_messages + [{"role": "assistant", "content": final_content, "id": assistant_id}]
         save_history(new_history, session_file)
         logger.info(f"历史记录已保存到: {session_file}")
 
         logger.info("聊天请求处理完成，返回响应")
-        return {"role": "assistant", "content": final_content}
+        return {"role": "assistant", "content": final_content, "id": assistant_id}
 
     except Exception as e:
         logger.error(f"聊天请求处理失败: {e}", exc_info=True)

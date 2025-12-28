@@ -12,12 +12,12 @@ export function initMarkdown() {
 }
 
 // 消息上屏逻辑
-export function appendMessage(role, text, raw = false) {
+export function appendMessage(role, text, raw = false, msgId = null) {
     const chatBox = document.getElementById('chatBox');
 
     const wrapper = document.createElement('div');
     wrapper.className = `message ${role}`;
-    wrapper.dataset.messageId = Date.now() + Math.random().toString(36).substr(2, 9);
+    wrapper.dataset.messageId = msgId || Date.now() + Math.random().toString(36).substr(2, 9);
     wrapper.dataset.messageRole = role;
 
     const contentDiv = document.createElement('div');
@@ -242,6 +242,14 @@ window.saveEditedMessage = async function() {
         bodyDiv.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightElement(block);
         });
+        
+        // 更新state.conversationHistory
+        const msgIndex = state.conversationHistory.findIndex(msg => 
+            msg.id === messageId && msg.role === messageRole
+        );
+        if (msgIndex !== -1) {
+            state.conversationHistory[msgIndex].content = newContent;
+        }
         
         // 重新渲染LaTeX
         if (typeof renderMathInElement === 'function') {

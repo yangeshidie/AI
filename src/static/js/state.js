@@ -15,4 +15,9 @@ export function setSessionFile(fileName) { state.currentSessionFile = fileName; 
 export function setCurrentKB(kb) { state.currentKB = kb; }
 export function setFileToDelete(file) { state.fileToDelete = file; }
 export function clearHistory() { state.conversationHistory = []; }
-export function pushToHistory(msg) { state.conversationHistory.push(msg); }
+export function pushToHistory(msg) {
+    if (!msg.id) {
+        msg.id = Date.now() + Math.random().toString(36).substr(2, 9);
+    }
+    state.conversationHistory.push(msg);
+}

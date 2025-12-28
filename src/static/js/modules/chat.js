@@ -90,12 +90,15 @@ export async function sendMessage() {
         uiContent = (uiContent || '') + images + others;
     }
 
-    appendMessage('user', uiContent);
-
     input.value = '';
     clearMediaSelection();
 
-    pushToHistory({ role: 'user', content: messageContent });
+    // 先添加到历史记录，生成ID
+    const userMsg = { role: 'user', content: messageContent };
+    pushToHistory(userMsg);
+
+    // 使用相同的ID显示消息
+    appendMessage('user', uiContent, false, userMsg.id);
 
     // 如果没有会话文件，创建一个新的会话文件名
     if (!state.currentSessionFile) {
@@ -181,9 +184,13 @@ async function sendStreamMessage(payload) {
 
                         if (data.done) {
                             loadingDiv.remove();
-                            const finalContentDiv = appendMessage('assistant', data.content);
+                            const assistantMsg = { role: 'assistant', content: data.content };
+                            if (data.id) {
+                                assistantMsg.id = data.id;
+                            }
+                            const finalContentDiv = appendMessage('assistant', data.content, false, data.id);
                             addDetachButton(finalContentDiv.parentElement, data.content);
-                            pushToHistory({ role: 'assistant', content: data.content });
+                            pushToHistory(assistantMsg);
                             loadHistoryList();
                         }
                     } catch (e) {
@@ -219,7 +226,7 @@ async function sendNonStreamMessage(payload) {
         }
 
         if (data.content) {
-            const contentDiv = appendMessage('assistant', data.content);
+            const contentDiv = appendMessage('assistant', data.content, false, data.id);
             addDetachButton(contentDiv.parentElement, data.content);
             pushToHistory(data);
             loadHistoryList();
