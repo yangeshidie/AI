@@ -166,6 +166,7 @@ async def chat_endpoint(request: ChatRequest):
     """处理聊天请求"""
     logger.info(f"收到聊天请求 - Model: {request.model}, API URL: {request.api_url}, Stream: {request.stream}")
     logger.debug(f"请求消息数量: {len(request.messages)}")
+    logger.debug(f"请求消息ID: {[msg.get('id') for msg in request.messages]}")
     logger.debug(f"KB ID: {request.kb_id}")
     
     try:
@@ -192,18 +193,88 @@ async def chat_endpoint(request: ChatRequest):
         
         if request.stream:
             return StreamingResponse(
-                _stream_chat_response(client, request.model, current_messages, request.messages, request.session_file),
+                _stream_chat_response(client, request.model, current_messages, request.messages, request.session_file, request.kb_id),
                 media_type="text/event-stream"
             )
         else:
-            return await _non_stream_chat_response(client, request.model, current_messages, request.messages, request.session_file)
+            return await _non_stream_chat_response(client, request.model, current_messages, request.messages, request.session_file, request.kb_id)
             
     except Exception as e:
         logger.error(f"聊天请求处理失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any]], original_messages: List[Dict[str, Any]], session_file: str):
+def save_history(messages: List[Dict[str, Any]], filename: str, kb_id: Optional[str] = None) -> None:
+    """
+    保存聊天历史到按日期组织的目录中
+
+    Args:
+        messages: 消息列表
+        filename: 文件名或完整路径（如 "chat_123.json" 或 "2025-12-27/chat_123.json"）
+        kb_id: 关联的知识库ID
+    """
+    from app.core.history import save_history as core_save_history
+    
+    # 将 kb_id 作为元数据保存到历史记录中
+    history_data = {
+        "messages": messages,
+        "kb_id": kb_id
+    }
+    
+    # 验证文件名不为空
+    if not filename or not filename.strip():
+        raise ValueError("文件名不能为空")
+    
+    # 如果 filename 包含日期目录，直接使用；否则创建新的日期目录
+    if '/' in filename:
+        file_path = HISTORY_DIR / filename
+        # 确保目录存在
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        import datetime
+        now = datetime.datetime.now()
+        date_str = now.strftime("%Y-%m-%d")
+        save_dir = HISTORY_DIR / date_str
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+        if not filename.endswith('.json'):
+            filename += '.json'
+
+        file_path = save_dir / filename
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(history_data, f, ensure_ascii=False, indent=2)
+
+
+def load_history_file(filepath_str: str) -> Optional[Dict[str, Any]]:
+    """
+    加载指定的历史文件
+
+    Args:
+        filepath_str: 相对于 HISTORY_DIR 的文件路径
+
+    Returns:
+        包含 messages 和 kb_id 的字典，如果文件不存在则返回 None
+    """
+    file_path = HISTORY_DIR / filepath_str
+    if not file_path.exists():
+        return None
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    
+    # 兼容旧格式：如果直接是消息列表，则包装成新格式
+    if isinstance(data, list):
+        return {"messages": data, "kb_id": None}
+    
+    # 新格式：包含 messages 和 kb_id
+    if isinstance(data, dict) and "messages" in data:
+        return data
+    
+    return None
+
+
+async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any]], original_messages: List[Dict[str, Any]], session_file: str, kb_id: Optional[str] = None):
     """流式响应生成器"""
     full_content = ""
     
@@ -227,8 +298,12 @@ async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any
         processed_content = _process_image_content(full_content)
         
         assistant_id = str(int(time.time() * 1000)) + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=9))
+        
+        logger.debug(f"原始消息数量: {len(original_messages)}")
+        logger.debug(f"原始消息ID: {[msg.get('id') for msg in original_messages]}")
+        
         new_history = original_messages + [{"role": "assistant", "content": processed_content, "id": assistant_id}]
-        save_history(new_history, session_file)
+        save_history(new_history, session_file, kb_id)
         logger.info(f"历史记录已保存到: {session_file}")
         
         yield f"data: {json.dumps({'done': True, 'content': processed_content, 'id': assistant_id}, ensure_ascii=False)}\n\n"
@@ -238,7 +313,7 @@ async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any
         yield f"data: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
 
 
-async def _non_stream_chat_response(client, model: str, messages: List[Dict[str, Any]], original_messages: List[Dict[str, Any]], session_file: str) -> Dict[str, str]:
+async def _non_stream_chat_response(client, model: str, messages: List[Dict[str, Any]], original_messages: List[Dict[str, Any]], session_file: str, kb_id: Optional[str] = None) -> Dict[str, str]:
     """非流式响应处理"""
     try:
         response = client.chat.completions.create(
@@ -279,7 +354,7 @@ async def _non_stream_chat_response(client, model: str, messages: List[Dict[str,
 
         assistant_id = str(int(time.time() * 1000)) + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=9))
         new_history = original_messages + [{"role": "assistant", "content": final_content, "id": assistant_id}]
-        save_history(new_history, session_file)
+        save_history(new_history, session_file, kb_id)
         logger.info(f"历史记录已保存到: {session_file}")
 
         logger.info("聊天请求处理完成，返回响应")
@@ -324,19 +399,36 @@ async def edit_message(request: Dict[str, Any]) -> Dict[str, Any]:
             raise HTTPException(status_code=400, detail="缺少 session_file 参数")
         
         # 使用 HISTORY_DIR 而不是 STATIC_DIR / "chat_history"
-        history = load_history_file(session_file)
-        if history is None:
+        history_data = load_history_file(session_file)
+        if history_data is None:
             raise HTTPException(status_code=404, detail="会话文件不存在")
+        
+        messages = history_data.get('messages', [])
+        kb_id = history_data.get('kb_id')
         
         # 查找并更新消息
         message_found = False
-        for msg in history:
-            if msg.get('role') == role:
-                # 这里使用简单的匹配逻辑，实际应该使用更精确的消息ID
-                # 由于前端生成的message_id是随机的，我们这里简化处理
-                # 实际应用中应该维护一个消息ID到历史记录索引的映射
+        for msg in messages:
+            if msg.get('id') == message_id and msg.get('role') == role:
                 message_found = True
-                msg['content'] = content
+                # 如果原内容是多模态格式（数组），保持多模态格式
+                if isinstance(msg.get('content'), list):
+                    # 保留图片等媒体，只更新文本部分
+                    new_content = []
+                    text_updated = False
+                    for item in msg['content']:
+                        if item.get('type') == 'text' and not text_updated:
+                            new_content.append({'type': 'text', 'text': content})
+                            text_updated = True
+                        else:
+                            new_content.append(item)
+                    # 如果没有找到文本项，添加一个
+                    if not text_updated:
+                        new_content.append({'type': 'text', 'text': content})
+                    msg['content'] = new_content
+                else:
+                    # 简单文本格式
+                    msg['content'] = content
                 logger.info(f"已更新 {role} 消息内容")
                 break
         
@@ -344,7 +436,7 @@ async def edit_message(request: Dict[str, Any]) -> Dict[str, Any]:
             raise HTTPException(status_code=404, detail="未找到要编辑的消息")
         
         # 保存更新后的历史记录
-        save_history(history, session_file)
+        save_history(messages, session_file, kb_id)
         
         return {"success": True, "message": "消息编辑成功"}
         
@@ -372,32 +464,49 @@ async def delete_message(request: Dict[str, Any]) -> Dict[str, Any]:
         if not session_file:
             raise HTTPException(status_code=400, detail="缺少 session_file 参数")
         
+        logger.info(f"会话文件路径: {session_file}")
+        
         # 使用 HISTORY_DIR 而不是 STATIC_DIR / "chat_history"
-        history = load_history_file(session_file)
-        if history is None:
+        history_data = load_history_file(session_file)
+        if history_data is None:
+            logger.error(f"会话文件不存在: {HISTORY_DIR / session_file}")
             raise HTTPException(status_code=404, detail="会话文件不存在")
+        
+        messages = history_data.get('messages', [])
+        kb_id = history_data.get('kb_id')
+        
+        logger.info(f"当前消息数量: {len(messages)}, kb_id: {kb_id}")
         
         # 查找并删除消息
         message_found = False
-        new_history = []
+        new_messages = []
         deleted_content = None
         
-        for msg in history:
-            if msg.get('role') == role and not message_found:
-                # 删除第一条匹配的消息
+        for msg in messages:
+            if msg.get('id') == message_id and msg.get('role') == role:
                 message_found = True
                 deleted_content = msg.get('content', '')
                 logger.info(f"已删除 {role} 消息")
                 continue
-            new_history.append(msg)
+            new_messages.append(msg)
         
         if not message_found:
+            logger.error(f"未找到要删除的消息 - ID: {message_id}, Role: {role}")
+            logger.error(f"当前所有消息ID: {[msg.get('id') for msg in messages]}")
             raise HTTPException(status_code=404, detail="未找到要删除的消息")
         
         # 如果删除的内容包含图片URL，尝试删除本地图片文件
-        if deleted_content and isinstance(deleted_content, str):
+        if deleted_content:
+            content_to_check = ''
+            if isinstance(deleted_content, str):
+                content_to_check = deleted_content
+            elif isinstance(deleted_content, list):
+                # 从多模态内容中提取文本部分
+                text_parts = [item.get('text', '') for item in deleted_content if item.get('type') == 'text']
+                content_to_check = ' '.join(text_parts)
+            
             image_pattern = r'!\[.*?\]\(/static/generated_images/([^\)]+)\)'
-            image_matches = re.findall(image_pattern, deleted_content)
+            image_matches = re.findall(image_pattern, content_to_check)
             
             for image_filename in image_matches:
                 image_path = STATIC_DIR / "generated_images" / image_filename
@@ -409,7 +518,7 @@ async def delete_message(request: Dict[str, Any]) -> Dict[str, Any]:
                         logger.warning(f"删除图片文件失败: {img_err}")
         
         # 保存更新后的历史记录
-        save_history(new_history, session_file)
+        save_history(new_messages, session_file, kb_id)
         
         return {"success": True, "message": "消息删除成功"}
         

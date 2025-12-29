@@ -12,13 +12,14 @@ from typing import Dict, List, Optional, Any
 from app.config import HISTORY_DIR
 
 
-def save_history(messages: List[Dict[str, Any]], filename: str) -> None:
+def save_history(messages: List[Dict[str, Any]], filename: str, kb_id: Optional[str] = None) -> None:
     """
     保存聊天历史到按日期组织的目录中
 
     Args:
         messages: 消息列表
         filename: 文件名或完整路径（如 "chat_123.json" 或 "2025-12-27/chat_123.json"）
+        kb_id: 关联的知识库ID
     """
     # 验证文件名不为空
     if not filename or not filename.strip():
@@ -40,8 +41,23 @@ def save_history(messages: List[Dict[str, Any]], filename: str) -> None:
 
         file_path = save_dir / filename
 
+    # 确保每条消息都有 ID
+    for msg in messages:
+        if 'id' not in msg or not msg['id']:
+            msg['id'] = str(int(datetime.datetime.now().timestamp() * 1000)) + ''.join(__import__('random').choices('abcdefghijklmnopqrstuvwxyz0123456789', k=9))
+    
+    # 保存为包含 messages 和 kb_id 的字典格式
+    data = {
+        "messages": messages,
+        "kb_id": kb_id
+    }
+    
+    logger = __import__('logging').getLogger(__name__)
+    logger.debug(f"保存历史记录 - 文件: {filename}, 消息数量: {len(messages)}")
+    logger.debug(f"保存的消息ID: {[msg.get('id') for msg in messages]}")
+    
     with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump(messages, f, ensure_ascii=False, indent=2)
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def get_all_history() -> Dict[str, List[str]]:
@@ -66,7 +82,7 @@ def get_all_history() -> Dict[str, List[str]]:
     return result
 
 
-def load_history_file(filepath_str: str) -> Optional[List[Dict[str, Any]]]:
+def load_history_file(filepath_str: str) -> Optional[Dict[str, Any]]:
     """
     加载指定的历史文件
 
@@ -74,11 +90,21 @@ def load_history_file(filepath_str: str) -> Optional[List[Dict[str, Any]]]:
         filepath_str: 相对于 HISTORY_DIR 的文件路径
 
     Returns:
-        消息列表，如果文件不存在则返回 None
+        包含 messages 和 kb_id 的字典，如果文件不存在则返回 None
     """
     file_path = HISTORY_DIR / filepath_str
     if not file_path.exists():
         return None
 
     with open(file_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    
+    # 兼容旧格式：如果直接是消息列表，则包装成新格式
+    if isinstance(data, list):
+        return {"messages": data, "kb_id": None}
+    
+    # 新格式：包含 messages 和 kb_id
+    if isinstance(data, dict) and "messages" in data:
+        return data
+    
+    return None

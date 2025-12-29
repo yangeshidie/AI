@@ -38,8 +38,8 @@ async def list_history() -> Dict[str, List[str]]:
 
 
 @router.post("/load")
-async def load_history(req: LoadHistoryRequest) -> List[Dict[str, Any]]:
-    """加载指定的历史记录"""
+async def load_history(req: LoadHistoryRequest) -> Dict[str, Any]:
+    """加载指定的历史记录，返回包含messages和kb_id的字典"""
     data = load_history_file(req.filepath)
     if data is None:
         raise HTTPException(status_code=404, detail="Not Found")
