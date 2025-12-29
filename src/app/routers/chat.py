@@ -19,12 +19,16 @@ from app.schemas import ChatRequest, ModelListRequest
 from app.core.rag_engine import query_rag_with_filter
 from app.core.kb_manager import kb_manager
 from app.core.history import save_history, load_history_file
+from app.core.api_adapter import MultimodalAdapter
 from app.config import DEFAULT_API_URL, DEFAULT_API_KEY, DEFAULT_MODEL, STATIC_DIR, HISTORY_DIR
 from advanced_system import create_rag_system_prompt, create_chat_system_prompt
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
 logger = logging.getLogger(__name__)
+
+# 初始化多模态适配器
+adapter = MultimodalAdapter()
 
 
 @router.get("/config")
@@ -83,125 +87,6 @@ def _prepare_messages_with_system_prompt(
             current_messages.insert(0, create_chat_system_prompt())
 
     return current_messages
-
-
-def _process_image_content(content: str) -> str:
-    """
-    处理响应内容中的Base64图片，保存到本地并替换为本地URL
-    """
-    try:
-        logger.info("开始处理图片内容")
-        logger.debug(f"原始内容长度: {len(content)}")
-        logger.debug(f"原始内容前200字符: {content[:200]}")
-        
-        generated_images_dir = STATIC_DIR / "generated_images"
-        generated_images_dir.mkdir(exist_ok=True)
-        logger.info(f"图片保存目录: {generated_images_dir}")
-
-        if content.strip().startswith("{") and content.strip().endswith("}"):
-            logger.info("检测到可能的 JSON 格式响应，尝试解析")
-            try:
-                data = json.loads(content)
-                logger.info(f"解析后的 JSON 数据: {data}")
-                if "image" in data:
-                    image_data = data["image"]
-                    logger.info(f"发现 image 字段，长度: {len(image_data)}")
-                    if not image_data.startswith("data:image"):
-                        image_data = f"data:image/png;base64,{image_data}"
-                    content = f"![Generated Image]({image_data})\n\n{data.get('text', '')}"
-                    logger.info("已转换为 Markdown 格式")
-                elif "image_url" in data and data["image_url"].startswith("data:image"):
-                    content = f"![Generated Image]({data['image_url']})\n\n{data.get('text', '')}"
-                    logger.info("已从 image_url 转换为 Markdown 格式")
-            except json.JSONDecodeError as e:
-                logger.warning(f"JSON 解析失败: {e}")
-                pass
-
-        def save_base64_image_match(match):
-            alt_text = match.group(1)
-            file_ext = match.group(2)
-            base64_str = match.group(3)
-
-            logger.info(f"匹配到图片 - alt: {alt_text}, ext: {file_ext}, base64长度: {len(base64_str)}")
-
-            if file_ext == "jpeg":
-                file_ext = "jpg"
-
-            img_filename = f"gen_{uuid.uuid4().hex}.{file_ext}"
-            img_path = generated_images_dir / img_filename
-            logger.info(f"准备保存图片到: {img_path}")
-
-            try:
-                decoded_data = base64.b64decode(base64_str)
-                logger.info(f"Base64解码成功，数据长度: {len(decoded_data)}")
-                
-                with open(img_path, "wb") as f:
-                    f.write(decoded_data)
-
-                local_url = f"/static/generated_images/{img_filename}"
-                logger.info(f"图片已保存到: {local_url}")
-
-                return f"![{alt_text}]({local_url})"
-            except Exception as save_err:
-                logger.error(f"保存图片时出错: {save_err}", exc_info=True)
-                return match.group(0)
-
-        pattern = r'!\[(.*?)\]\(data:image\/(.*?);base64,([^\)]+)\)'
-
-        matches = re.findall(pattern, content)
-        logger.info(f"找到 {len(matches)} 个 base64 图片")
-
-        content = re.sub(pattern, save_base64_image_match, content)
-        logger.info("图片处理完成")
-
-        return content
-
-    except Exception as e:
-        logger.error(f"处理图片时出错: {e}", exc_info=True)
-        return content
-
-
-@router.post("/chat")
-async def chat_endpoint(request: ChatRequest):
-    """处理聊天请求"""
-    logger.info(f"收到聊天请求 - Model: {request.model}, API URL: {request.api_url}, Stream: {request.stream}")
-    logger.debug(f"请求消息数量: {len(request.messages)}")
-    logger.debug(f"请求消息ID: {[msg.get('id') for msg in request.messages]}")
-    logger.debug(f"KB ID: {request.kb_id}")
-    
-    try:
-        logger.info("初始化 OpenAI 客户端")
-        
-        client = OpenAI(
-            base_url=request.api_url, 
-            api_key=request.api_key,
-            max_retries=0,
-            timeout=300.0  # 设置5分钟超时，适合长图片生成
-        )
-        
-        user_query = _extract_last_user_query(request.messages)
-        logger.debug(f"提取的用户查询: {user_query}")
-
-        current_messages = _prepare_messages_with_system_prompt(
-            request.messages,
-            request.kb_id,
-            user_query
-        )
-        logger.debug(f"准备发送的消息数量: {len(current_messages)}")
-
-        logger.info(f"调用模型 API - {request.model}, Stream: {request.stream}")
-        
-        if request.stream:
-            return StreamingResponse(
-                _stream_chat_response(client, request.model, current_messages, request.messages, request.session_file, request.kb_id),
-                media_type="text/event-stream"
-            )
-        else:
-            return await _non_stream_chat_response(client, request.model, current_messages, request.messages, request.session_file, request.kb_id)
-            
-    except Exception as e:
-        logger.error(f"聊天请求处理失败: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 def save_history(messages: List[Dict[str, Any]], filename: str, kb_id: Optional[str] = None) -> None:
@@ -274,6 +159,54 @@ def load_history_file(filepath_str: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+
+@router.post("/chat")
+async def chat_endpoint(request: ChatRequest):
+    """处理聊天请求"""
+    logger.info(f"收到聊天请求 - Model: {request.model}, API URL: {request.api_url}, Stream: {request.stream}")
+    logger.debug(f"请求消息数量: {len(request.messages)}")
+    logger.debug(f"请求消息ID: {[msg.get('id') for msg in request.messages]}")
+    logger.debug(f"KB ID: {request.kb_id}")
+    
+    try:
+        logger.info("初始化 OpenAI 客户端")
+        
+        client = OpenAI(
+            base_url=request.api_url, 
+            api_key=request.api_key,
+            max_retries=0,
+            timeout=300.0  # 设置5分钟超时，适合长图片生成
+        )
+        
+        user_query = _extract_last_user_query(request.messages)
+        logger.debug(f"提取的用户查询: {user_query}")
+
+        # 1. 先处理系统提示词
+        current_messages = _prepare_messages_with_system_prompt(
+            request.messages,
+            request.kb_id,
+            user_query
+        )
+        
+        # 2. 再进行多模态上下文增强
+        context_aware_messages = adapter.prepare_messages(current_messages)
+        logger.debug(f"准备发送的消息数量: {len(context_aware_messages)}")
+
+        logger.info(f"调用模型 API - {request.model}, Stream: {request.stream}")
+        
+        if request.stream:
+            return StreamingResponse(
+                _stream_chat_response(client, request.model, context_aware_messages, request.messages, request.session_file, request.kb_id),
+                media_type="text/event-stream"
+            )
+        else:
+            return await _non_stream_chat_response(client, request.model, context_aware_messages, request.messages, request.session_file, request.kb_id)
+            
+    except Exception as e:
+        logger.error(f"聊天请求处理失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any]], original_messages: List[Dict[str, Any]], session_file: str, kb_id: Optional[str] = None):
     """流式响应生成器"""
     full_content = ""
@@ -295,7 +228,7 @@ async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any
         
         logger.info(f"流式响应完成，总内容长度: {len(full_content)}")
         
-        processed_content = _process_image_content(full_content)
+        processed_content = adapter.process_response(full_content)
         
         assistant_id = str(int(time.time() * 1000)) + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=9))
         
@@ -350,7 +283,7 @@ async def _non_stream_chat_response(client, model: str, messages: List[Dict[str,
             logger.warning(f"检测到 API 错误响应: {final_content}")
             raise HTTPException(status_code=500, detail=f"API 返回错误: {final_content}")
 
-        final_content = _process_image_content(final_content)
+        final_content = adapter.process_response(final_content)
 
         assistant_id = str(int(time.time() * 1000)) + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=9))
         new_history = original_messages + [{"role": "assistant", "content": final_content, "id": assistant_id}]
