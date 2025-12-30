@@ -53,6 +53,7 @@ class ChatRequest(BaseModel):
     session_file: str
     kb_id: Optional[str] = None
     stream: bool = False
+    drawing_workspace_mode: bool = False
 
 
 class ModelListRequest(BaseModel):

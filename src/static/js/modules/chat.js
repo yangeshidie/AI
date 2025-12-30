@@ -1,4 +1,4 @@
-import { state, setConfig, setSessionFile, clearHistory, setCurrentKB, pushToHistory } from '../state.js';
+import { state, setConfig, setSessionFile, clearHistory, setCurrentKB, pushToHistory, setDrawingWorkspaceEnabled, addDrawingWorkspaceImage, removeDrawingWorkspaceImage, clearDrawingWorkspaceImages } from '../state.js';
 import { appendMessage } from '../utils.js';
 import { loadHistoryList } from './history.js';
 
@@ -32,6 +32,31 @@ export function toggleStream() {
     }
 }
 
+export function toggleDrawingWorkspace() {
+    state.drawingWorkspaceEnabled = !state.drawingWorkspaceEnabled;
+    const btn = document.getElementById('drawingWorkspaceToggleBtn');
+    const icon = document.getElementById('drawingWorkspaceIcon');
+    const text = document.getElementById('drawingWorkspaceText');
+    
+    if (state.drawingWorkspaceEnabled) {
+        btn.style.background = '#667eea';
+        btn.style.color = 'white';
+        icon.innerText = 'check_circle';
+        text.innerText = '开启';
+        setDrawingWorkspaceEnabled(true);
+        document.getElementById('drawingWorkspacePanel').style.display = 'block';
+        appendMessage('system', '绘图工作区已启用 - 对话将不保存历史记录');
+    } else {
+        btn.style.background = '';
+        btn.style.color = '';
+        icon.innerText = 'block';
+        text.innerText = '关闭';
+        setDrawingWorkspaceEnabled(false);
+        document.getElementById('drawingWorkspacePanel').style.display = 'none';
+        appendMessage('system', '绘图工作区已关闭');
+    }
+}
+
 export function startNewChat(resetUI = true) {
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
@@ -54,17 +79,24 @@ export async function sendMessage() {
     const input = document.getElementById('userInput');
     const msgText = input.value.trim();
 
-    if (!msgText && currentAttachments.length === 0) return;
+    if (!msgText && currentAttachments.length === 0 && state.drawingWorkspaceImages.length === 0) return;
 
     let messageContent;
 
-    if (currentAttachments.length > 0) {
+    if (currentAttachments.length > 0 || state.drawingWorkspaceImages.length > 0) {
         messageContent = [];
         if (msgText) {
             messageContent.push({ type: "text", text: msgText });
-        } else if (currentAttachments.length > 0 && !msgText) {
+        } else if (currentAttachments.length > 0 || state.drawingWorkspaceImages.length > 0) {
             messageContent.push({ type: "text", text: "Sent attachments." });
         }
+
+        state.drawingWorkspaceImages.forEach(img => {
+            messageContent.push({
+                type: "image_url",
+                image_url: { url: img.base64 }
+            });
+        });
 
         currentAttachments.forEach(att => {
             if (att.type === 'image') {
@@ -84,37 +116,41 @@ export async function sendMessage() {
     }
 
     let uiContent = msgText;
-    if (currentAttachments.length > 0) {
+    if (currentAttachments.length > 0 || state.drawingWorkspaceImages.length > 0) {
+        const workspaceImages = state.drawingWorkspaceImages.map(a => `<br><img src="${a.base64}" style="max-width: 200px; border-radius: 8px; margin-top: 5px;">`).join('');
         const images = currentAttachments.filter(a => a.type === 'image').map(a => `<br><img src="${a.base64}" style="max-width: 200px; border-radius: 8px; margin-top: 5px;">`).join('');
         const others = currentAttachments.filter(a => a.type !== 'image').map(a => `<br>[${a.type}: ${a.name}]`).join('');
-        uiContent = (uiContent || '') + images + others;
+        uiContent = (uiContent || '') + workspaceImages + images + others;
     }
 
     input.value = '';
     clearMediaSelection();
 
-    // 先添加到历史记录，生成ID
     const userMsg = { role: 'user', content: messageContent };
-    pushToHistory(userMsg);
+    
+    if (state.drawingWorkspaceEnabled) {
+        pushToHistory(userMsg);
+        appendMessage('user', uiContent, false, userMsg.id);
+    } else {
+        pushToHistory(userMsg);
+        appendMessage('user', uiContent, false, userMsg.id);
 
-    // 使用相同的ID显示消息
-    appendMessage('user', uiContent, false, userMsg.id);
-
-    // 如果没有会话文件，创建一个新的会话文件名
-    if (!state.currentSessionFile) {
-        const now = new Date();
-        const dateStr = now.toISOString().split('T')[0];
-        setSessionFile(`${dateStr}/chat_${now.getTime()}.json`);
+        if (!state.currentSessionFile) {
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            setSessionFile(`${dateStr}/chat_${now.getTime()}.json`);
+        }
     }
 
     const payload = {
         api_url: state.config.apiUrl,
         api_key: state.config.apiKey,
         model: state.config.model,
-        messages: state.conversationHistory,
-        session_file: state.currentSessionFile,
+        messages: state.drawingWorkspaceEnabled ? [userMsg] : state.conversationHistory,
+        session_file: state.drawingWorkspaceEnabled ? null : state.currentSessionFile,
         kb_id: state.currentKB ? state.currentKB.id : null,
-        stream: state.streamEnabled
+        stream: state.streamEnabled,
+        drawing_workspace_mode: state.drawingWorkspaceEnabled
     };
 
     if (state.streamEnabled) {
@@ -190,6 +226,11 @@ async function sendStreamMessage(payload) {
                             }
                             const finalContentDiv = appendMessage('assistant', data.content, false, data.id);
                             addDetachButton(finalContentDiv.parentElement, data.content);
+                            
+                            if (state.drawingWorkspaceEnabled) {
+                                addGeneratedImagesToWorkspace(data.content);
+                            }
+                            
                             pushToHistory(assistantMsg);
                             loadHistoryList();
                         }
@@ -228,6 +269,11 @@ async function sendNonStreamMessage(payload) {
         if (data.content) {
             const contentDiv = appendMessage('assistant', data.content, false, data.id);
             addDetachButton(contentDiv.parentElement, data.content);
+            
+            if (state.drawingWorkspaceEnabled) {
+                addGeneratedImagesToWorkspace(data.content);
+            }
+            
             pushToHistory(data);
             loadHistoryList();
         } else {
@@ -422,4 +468,99 @@ function updateMediaPreview() {
             return `<span style="display:inline-block; padding: 5px 10px; background: #333; border-radius: 4px; margin-right: 5px; font-size: 12px;">[${att.type}] ${att.name}</span>`;
         }
     }).join('');
+}
+
+export function handleDrawingWorkspaceUpload(input) {
+    const files = input.files;
+    if (!files.length) return;
+
+    const file = files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const base64 = e.target.result;
+        try {
+            addDrawingWorkspaceImage({ name: file.name, base64: base64 });
+            updateDrawingWorkspaceUI();
+            appendMessage('system', `图片 "${file.name}" 已添加到绘图工作区`);
+        } catch (error) {
+            appendMessage('system', error.message);
+        }
+    };
+
+    reader.readAsDataURL(file);
+    input.value = '';
+}
+
+export function removeDrawingWorkspaceImageByIndex(index) {
+    removeDrawingWorkspaceImage(index);
+    updateDrawingWorkspaceUI();
+}
+
+export function clearDrawingWorkspace() {
+    if (confirm('确定要清空绘图工作区吗？')) {
+        clearDrawingWorkspaceImages();
+        updateDrawingWorkspaceUI();
+        appendMessage('system', '绘图工作区已清空');
+    }
+}
+
+function updateDrawingWorkspaceUI() {
+    const grid = document.getElementById('drawingWorkspaceGrid');
+    const count = document.getElementById('drawingWorkspaceCount');
+    
+    count.innerText = `${state.drawingWorkspaceImages.length}/20`;
+    
+    grid.innerHTML = state.drawingWorkspaceImages.map((img, index) => `
+        <div class="drawing-workspace-item" onclick="window.viewDrawingWorkspaceImage(${index})">
+            <img src="${img.base64}" alt="${img.name}" style="width: 100%; height: 100%; object-fit: cover;">
+            <button class="drawing-workspace-delete" onclick="event.stopPropagation(); window.removeDrawingWorkspaceImageByIndex(${index})">
+                <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+            </button>
+        </div>
+    `).join('');
+}
+
+export function viewDrawingWorkspaceImage(index) {
+    const img = state.drawingWorkspaceImages[index];
+    const modal = document.createElement('div');
+    modal.className = 'image-modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 9999;';
+    modal.innerHTML = `
+        <img src="${img.base64}" style="max-width: 90%; max-height: 90%; border-radius: 8px;">
+        <button onclick="this.parentElement.remove()" style="position: absolute; top: 20px; right: 20px; background: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer;">×</button>
+    `;
+    document.body.appendChild(modal);
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+}
+
+async function addGeneratedImagesToWorkspace(content) {
+    const imagePattern = /!\[.*?\]\((\/static\/generated_images\/[^)]+)\)/g;
+    const matches = content.matchAll(imagePattern);
+    
+    for (const match of matches) {
+        const imageUrl = match[1];
+        try {
+            const response = await fetch(imageUrl);
+            if (!response.ok) continue;
+            
+            const blob = await response.blob();
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                const filename = imageUrl.split('/').pop();
+                try {
+                    addDrawingWorkspaceImage({ name: filename, base64: base64 });
+                    updateDrawingWorkspaceUI();
+                } catch (error) {
+                    console.error('添加生成图片到工作区失败:', error);
+                }
+            };
+            
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            console.error('获取生成图片失败:', error);
+        }
+    }
 }

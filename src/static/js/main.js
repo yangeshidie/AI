@@ -31,6 +31,11 @@ window.handleFileSelect = Chat.handleFileSelect;
 window.handleFileSelect = handleFileSelect;
 window.clearMediaSelection = Chat.clearMediaSelection;
 window.toggleStream = Chat.toggleStream;
+window.toggleDrawingWorkspace = Chat.toggleDrawingWorkspace;
+window.handleDrawingWorkspaceUpload = Chat.handleDrawingWorkspaceUpload;
+window.removeDrawingWorkspaceImageByIndex = Chat.removeDrawingWorkspaceImageByIndex;
+window.clearDrawingWorkspace = Chat.clearDrawingWorkspace;
+window.viewDrawingWorkspaceImage = Chat.viewDrawingWorkspaceImage;
 
 // 知识库 KB
 window.loadKBList = KB.loadKBList;

@@ -101,6 +101,29 @@
                     </div>
                 </div>
 
+                <!-- 绘图工作区面板 -->
+                <div class="drawing-workspace-panel" id="drawingWorkspacePanel" style="display: none;">
+                    <div class="drawing-workspace-header">
+                        <div class="drawing-workspace-title">
+                            <span class="material-symbols-outlined">palette</span>
+                            <span>绘图工作区</span>
+                            <span class="drawing-workspace-count" id="drawingWorkspaceCount">0/20</span>
+                        </div>
+                        <div class="drawing-workspace-actions">
+                            <button class="action-icon-btn" onclick="document.getElementById('drawingWorkspaceImageInput').click()" title="上传图片到工作区">
+                                <span class="material-symbols-outlined">add_photo_alternate</span>
+                            </button>
+                            <button class="action-icon-btn" onclick="clearDrawingWorkspace()" title="清空工作区">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <input type="file" id="drawingWorkspaceImageInput" accept="image/*" style="display: none;" onchange="window.handleDrawingWorkspaceUpload(this)">
+                    <div class="drawing-workspace-grid" id="drawingWorkspaceGrid">
+                        <!-- JS 将在这里渲染图片 -->
+                    </div>
+                </div>
+
                 <!-- 输入框区 -->
                 <div class="input-area">
                     <div class="input-box-wrapper">
@@ -257,6 +280,17 @@
                                         <span id="streamText">关闭</span>
                                     </button>
                                     <span style="color: #888; font-size: 12px;">启用后响应将逐字显示，适合长文本生成</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom:20px;">
+                                <label style="display:block; margin-bottom:5px;">启用绘图工作区</label>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <button id="drawingWorkspaceToggleBtn" class="secondary-btn" onclick="toggleDrawingWorkspace()" style="min-width: 80px;">
+                                        <span class="material-symbols-outlined" id="drawingWorkspaceIcon">block</span>
+                                        <span id="drawingWorkspaceText">关闭</span>
+                                    </button>
+                                    <span style="color: #888; font-size: 12px;">启用后对话将不保存历史记录，适合图片生成工作流</span>
                                 </div>
                             </div>
 

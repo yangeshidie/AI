@@ -163,7 +163,7 @@ def load_history_file(filepath_str: str) -> Optional[Dict[str, Any]]:
 @router.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     """处理聊天请求"""
-    logger.info(f"收到聊天请求 - Model: {request.model}, API URL: {request.api_url}, Stream: {request.stream}")
+    logger.info(f"收到聊天请求 - Model: {request.model}, API URL: {request.api_url}, Stream: {request.stream}, Drawing Workspace: {request.drawing_workspace_mode}")
     logger.debug(f"请求消息数量: {len(request.messages)}")
     logger.debug(f"请求消息ID: {[msg.get('id') for msg in request.messages]}")
     logger.debug(f"KB ID: {request.kb_id}")
@@ -196,18 +196,18 @@ async def chat_endpoint(request: ChatRequest):
         
         if request.stream:
             return StreamingResponse(
-                _stream_chat_response(client, request.model, context_aware_messages, request.messages, request.session_file, request.kb_id),
+                _stream_chat_response(client, request.model, context_aware_messages, request.messages, request.session_file, request.kb_id, request.drawing_workspace_mode),
                 media_type="text/event-stream"
             )
         else:
-            return await _non_stream_chat_response(client, request.model, context_aware_messages, request.messages, request.session_file, request.kb_id)
+            return await _non_stream_chat_response(client, request.model, context_aware_messages, request.messages, request.session_file, request.kb_id, request.drawing_workspace_mode)
             
     except Exception as e:
         logger.error(f"聊天请求处理失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any]], original_messages: List[Dict[str, Any]], session_file: str, kb_id: Optional[str] = None):
+async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any]], original_messages: List[Dict[str, Any]], session_file: str, kb_id: Optional[str] = None, drawing_workspace_mode: bool = False):
     """流式响应生成器"""
     full_content = ""
     
@@ -235,9 +235,12 @@ async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any
         logger.debug(f"原始消息数量: {len(original_messages)}")
         logger.debug(f"原始消息ID: {[msg.get('id') for msg in original_messages]}")
         
-        new_history = original_messages + [{"role": "assistant", "content": processed_content, "id": assistant_id}]
-        save_history(new_history, session_file, kb_id)
-        logger.info(f"历史记录已保存到: {session_file}")
+        if not drawing_workspace_mode:
+            new_history = original_messages + [{"role": "assistant", "content": processed_content, "id": assistant_id}]
+            save_history(new_history, session_file, kb_id)
+            logger.info(f"历史记录已保存到: {session_file}")
+        else:
+            logger.info("绘图工作区模式：不保存历史记录")
         
         yield f"data: {json.dumps({'done': True, 'content': processed_content, 'id': assistant_id}, ensure_ascii=False)}\n\n"
         
@@ -246,7 +249,7 @@ async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any
         yield f"data: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
 
 
-async def _non_stream_chat_response(client, model: str, messages: List[Dict[str, Any]], original_messages: List[Dict[str, Any]], session_file: str, kb_id: Optional[str] = None) -> Dict[str, str]:
+async def _non_stream_chat_response(client, model: str, messages: List[Dict[str, Any]], original_messages: List[Dict[str, Any]], session_file: str, kb_id: Optional[str] = None, drawing_workspace_mode: bool = False) -> Dict[str, str]:
     """非流式响应处理"""
     try:
         response = client.chat.completions.create(
@@ -286,9 +289,13 @@ async def _non_stream_chat_response(client, model: str, messages: List[Dict[str,
         final_content = adapter.process_response(final_content)
 
         assistant_id = str(int(time.time() * 1000)) + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=9))
-        new_history = original_messages + [{"role": "assistant", "content": final_content, "id": assistant_id}]
-        save_history(new_history, session_file, kb_id)
-        logger.info(f"历史记录已保存到: {session_file}")
+        
+        if not drawing_workspace_mode:
+            new_history = original_messages + [{"role": "assistant", "content": final_content, "id": assistant_id}]
+            save_history(new_history, session_file, kb_id)
+            logger.info(f"历史记录已保存到: {session_file}")
+        else:
+            logger.info("绘图工作区模式：不保存历史记录")
 
         logger.info("聊天请求处理完成，返回响应")
         return {"role": "assistant", "content": final_content, "id": assistant_id}

@@ -1,5 +1,5 @@
 // static/js/modules/settings.js
-import { state, setConfig } from '../state.js';
+import { state, setConfig, setDrawingWorkspaceEnabled } from '../state.js';
 import { closeModal } from '../utils.js';
 
 export async function loadConfigs() {
