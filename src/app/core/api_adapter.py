@@ -10,6 +10,8 @@ import re
 import uuid
 from typing import List, Dict, Any, Optional, Union
 from pathlib import Path
+from io import BytesIO
+from PIL import Image
 
 from app.config import STATIC_DIR
 
@@ -24,67 +26,138 @@ class MultimodalAdapter:
     def __init__(self, image_save_dir: Path = None):
         self.image_save_dir = image_save_dir or (STATIC_DIR / "generated_images")
         self.image_save_dir.mkdir(parents=True, exist_ok=True)
+        self.max_history_images = 2  # 最多保留最近的 N 张图片上下文
 
     def prepare_messages(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         准备发送给 API 的消息列表
-        确保所有历史图片都被包含在上下文中
+        确保所有历史图片都被包含在上下文中，但进行数量限制和压缩优化
         """
         normalized_messages = []
         
-        # 收集所有历史图片
-        # 格式: {"url": "data:image/...", "detail": "auto"}
-        history_images = []
+        # 1. 预先扫描所有图片，确定哪些需要保留
+        # 我们倒序遍历消息，收集最近的 N 张图片的 ID (或路径)
+        images_to_keep = set()
+        image_count = 0
         
+        # Markdown 图片正则
+        md_image_pattern = re.compile(r'!\[(.*?)\]\((.*?)\)')
+        
+        for msg in reversed(messages):
+            content = msg.get("content")
+            
+            # Case A: Multimodal List
+            if isinstance(content, list):
+                for item in reversed(content):
+                    if item.get("type") == "image_url":
+                        url = item["image_url"]["url"]
+                        if image_count < self.max_history_images:
+                            images_to_keep.add(url)
+                            image_count += 1
+                            
+            # Case B: Markdown String
+            elif isinstance(content, str):
+                # 查找所有 markdown 图片链接
+                matches = md_image_pattern.findall(content)
+                # findall 返回 [(alt, url), ...]
+                # 我们需要倒序处理，因为我们要保留"最近"的
+                for _, url in reversed(matches):
+                    if image_count < self.max_history_images:
+                        images_to_keep.add(url)
+                        image_count += 1
+        
+        logger.info(f"上下文优化: 保留最近 {len(images_to_keep)} 张图片 (上限: {self.max_history_images})")
+
         for msg in messages:
             role = msg.get("role")
             content = msg.get("content")
             
-            # 提取该消息中的所有图片
-            current_msg_images = self._extract_images_from_content(content)
-            history_images.extend(current_msg_images)
-            
             # 构建新的消息体
             new_content = []
             
-            # 1. 添加文本内容
-            text_content = self._extract_text_from_content(content)
-            if text_content:
-                new_content.append({"type": "text", "text": text_content})
-            
-            # 2. 如果是当前最新的一条消息(用户发送的)，或者策略决定每条消息都带图片
-            # 这里采用策略：
-            # - 用户消息：保留该消息原本包含的图片
-            # - 助手消息：保留该消息原本生成的图片
-            # - 上下文增强：如果需要"强一致性"，可以在 System Prompt 后或者最新 User Message 前插入所有历史图片
-            # 但为了避免 Token 爆炸，我们通常只保留"该消息原本的图片" + "最近 N 轮的图片"
-            # 
-            # 修正策略：
-            # 为了达到"前后文一致性"，我们需要确保模型"看得到"之前的图片。
-            # 大多数模型（如 GPT-4V, Gemini）是无状态的，必须在每次请求中包含图片。
-            # 简单的做法是：保持消息原样，但确保格式是 OpenAI 兼容的 image_url 格式。
-            # 如果之前的消息里已经有了 image_url (base64)，那么直接发过去就行。
-            # 
-            # 关键点：OpenAI SDK 会自动处理历史消息中的 image_url。
-            # 我们只需要确保：
-            # 1. 历史记录里的图片是 base64 格式的 image_url，而不是本地路径
-            # 2. 如果历史记录里存的是本地路径，需要转换回 base64 发送给 API
-            
+            # Case A: Multimodal List (Existing Logic)
             if isinstance(content, list):
+                # 1. 添加文本内容
+                text_content = self._extract_text_from_content(content)
+                if text_content:
+                    new_content.append({"type": "text", "text": text_content})
+                
+                # 2. 处理图片
                 for item in content:
                     if item.get("type") == "image_url":
                         img_url = item["image_url"]["url"]
-                        # 如果是本地路径引用，尝试读取并转换为 base64
-                        if img_url.startswith("/static/") or img_url.startswith("http://localhost"):
-                            base64_url = self._local_path_to_base64(img_url)
-                            if base64_url:
-                                item["image_url"]["url"] = base64_url
-                new_content = content
+                        
+                        if img_url in images_to_keep:
+                            if img_url.startswith("/static/") or img_url.startswith("http://localhost"):
+                                base64_url = self._local_path_to_base64(img_url, compress=True)
+                                if base64_url:
+                                    new_content.append({
+                                        "type": "image_url",
+                                        "image_url": {"url": base64_url}
+                                    })
+                                else:
+                                    new_content.append(item)
+                            else:
+                                new_content.append(item)
+                        else:
+                            filename = Path(img_url).name
+                            new_content.append({
+                                "type": "text", 
+                                "text": f"\n[System: Historical image {filename} omitted for brevity]\n"
+                            })
+            
+            # Case B: Markdown String (New Logic)
             elif isinstance(content, str):
-                # 检查文本中是否包含 markdown 图片链接，如果有，转换为 multimodal 格式
-                # pattern = r'!\[(.*?)\]\((.*?)\)'
-                # 暂时只处理纯文本，图片通常在前端已经处理成 list 格式上传
-                new_content = content
+                # 我们需要将 Markdown 字符串拆分为 [Text, Image, Text, Image...]
+                # 使用 split 可能会比较麻烦，我们用 finditer
+                last_idx = 0
+                for match in md_image_pattern.finditer(content):
+                    start, end = match.span()
+                    alt_text = match.group(1)
+                    img_url = match.group(2)
+                    
+                    # 添加之前的文本
+                    if start > last_idx:
+                        text_segment = content[last_idx:start]
+                        if text_segment.strip():
+                            new_content.append({"type": "text", "text": text_segment})
+                    
+                    # 处理图片
+                    if img_url in images_to_keep:
+                        if img_url.startswith("/static/") or img_url.startswith("http://localhost"):
+                            base64_url = self._local_path_to_base64(img_url, compress=True)
+                            if base64_url:
+                                new_content.append({
+                                    "type": "image_url",
+                                    "image_url": {"url": base64_url}
+                                })
+                            else:
+                                # 转换失败，保留原 Markdown
+                                new_content.append({"type": "text", "text": match.group(0)})
+                        else:
+                            # 外部链接，尝试保留为 image_url (如果 API 支持) 或者保留原样
+                            # 这里假设外部链接 API 能处理，或者我们无法处理
+                            # 为安全起见，如果不是本地图片，我们保留原 Markdown
+                            new_content.append({"type": "text", "text": match.group(0)})
+                    else:
+                        # 不保留，替换为占位符
+                        filename = Path(img_url).name
+                        new_content.append({
+                            "type": "text", 
+                            "text": f"\n[System: Historical image {filename} omitted for brevity]\n"
+                        })
+                    
+                    last_idx = end
+                
+                # 添加剩余文本
+                if last_idx < len(content):
+                    text_segment = content[last_idx:]
+                    if text_segment.strip():
+                        new_content.append({"type": "text", "text": text_segment})
+                
+                # 如果没有找到任何图片，或者内容为空，确保至少有一个文本块
+                if not new_content and content.strip():
+                     new_content.append({"type": "text", "text": content})
             
             normalized_messages.append({
                 "role": role,
@@ -196,31 +269,49 @@ class MultimodalAdapter:
                     images.append(item["image_url"]["url"])
         return images
 
-    def _local_path_to_base64(self, path_or_url: str) -> Optional[str]:
-        """将本地路径或 URL 转换为 Base64 data URI"""
+    def _local_path_to_base64(self, path_or_url: str, compress: bool = True) -> Optional[str]:
+        """
+        将本地路径或 URL 转换为 Base64 data URI
+        
+        Args:
+            path_or_url: 图片路径
+            compress: 是否压缩图片 (Resize to max 1024px, JPEG quality 80)
+        """
         try:
             # 移除 URL 前缀，获取相对路径
-            # 假设 URL 格式为 /static/generated_images/xxx.png
             if "/static/" in path_or_url:
                 rel_path = path_or_url.split("/static/")[1]
                 full_path = STATIC_DIR / rel_path
             else:
-                return None # 无法处理外部 URL
+                return None 
 
             if not full_path.exists():
                 logger.warning(f"图片文件不存在: {full_path}")
                 return None
 
-            with open(full_path, "rb") as f:
-                data = f.read()
-                b64_data = base64.b64encode(data).decode('utf-8')
+            # 使用 PIL 处理图片
+            with Image.open(full_path) as img:
+                # 转换为 RGB (防止 RGBA 转 JPEG 报错)
+                if img.mode in ('RGBA', 'P'):
+                    img = img.convert('RGB')
                 
-            # 推断 mime type
-            ext = full_path.suffix.lower().replace(".", "")
-            if ext == "jpg": ext = "jpeg"
-            mime_type = f"image/{ext}"
+                if compress:
+                    # 调整大小：最大边长 1024
+                    max_size = 1024
+                    if max(img.size) > max_size:
+                        img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                
+                # 保存到内存缓冲区
+                buffer = BytesIO()
+                img.save(buffer, format="JPEG", quality=80)
+                data = buffer.getvalue()
+                
+                b64_data = base64.b64encode(data).decode('utf-8')
+                return f"data:image/jpeg;base64,{b64_data}"
             
-            return f"data:{mime_type};base64,{b64_data}"
+        except Exception as e:
+            logger.error(f"转换图片为 Base64 失败: {e}")
+            return None
             
         except Exception as e:
             logger.error(f"转换图片为 Base64 失败: {e}")
