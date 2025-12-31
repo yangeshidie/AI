@@ -50,7 +50,7 @@ class ChatRequest(BaseModel):
     api_key: str
     model: str
     messages: list
-    session_file: str
+    session_file: Optional[str] = None
     kb_id: Optional[str] = None
     stream: bool = False
     drawing_workspace_mode: bool = False

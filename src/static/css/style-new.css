@@ -729,7 +729,7 @@ textarea::placeholder {
     object-fit: cover;
 }
 
-.drawing-workspace-item-delete {
+.drawing-workspace-delete {
     position: absolute;
     top: 4px;
     right: 4px;
@@ -748,7 +748,7 @@ textarea::placeholder {
     transition: opacity var(--transition-fast);
 }
 
-.drawing-workspace-item:hover .drawing-workspace-item-delete {
+.drawing-workspace-item:hover .drawing-workspace-delete {
     opacity: 1;
 }
 
