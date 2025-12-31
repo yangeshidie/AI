@@ -28,12 +28,19 @@ class MultimodalAdapter:
         self.image_save_dir.mkdir(parents=True, exist_ok=True)
         self.max_history_images = 2  # 最多保留最近的 N 张图片上下文
 
-    def prepare_messages(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def prepare_messages(self, messages: List[Dict[str, Any]], drawing_workspace_mode: bool = False) -> List[Dict[str, Any]]:
         """
         准备发送给 API 的消息列表
         确保所有历史图片都被包含在上下文中，但进行数量限制和压缩优化
+        
+        Args:
+            messages: 消息列表
+            drawing_workspace_mode: 是否为绘图工作区模式（绘图工作区模式支持20张图片，普通模式支持2张）
         """
         normalized_messages = []
+        
+        # 根据模式设置图片上限
+        max_images = 20 if drawing_workspace_mode else 2
         
         # 1. 预先扫描所有图片，确定哪些需要保留
         # 我们倒序遍历消息，收集最近的 N 张图片的 ID (或路径)
@@ -51,7 +58,7 @@ class MultimodalAdapter:
                 for item in reversed(content):
                     if item.get("type") == "image_url":
                         url = item["image_url"]["url"]
-                        if image_count < self.max_history_images:
+                        if image_count < max_images:
                             images_to_keep.add(url)
                             image_count += 1
                             
@@ -62,11 +69,11 @@ class MultimodalAdapter:
                 # findall 返回 [(alt, url), ...]
                 # 我们需要倒序处理，因为我们要保留"最近"的
                 for _, url in reversed(matches):
-                    if image_count < self.max_history_images:
+                    if image_count < max_images:
                         images_to_keep.add(url)
                         image_count += 1
         
-        logger.info(f"上下文优化: 保留最近 {len(images_to_keep)} 张图片 (上限: {self.max_history_images})")
+        logger.info(f"上下文优化: 保留最近 {len(images_to_keep)} 张图片 (上限: {max_images}, 绘图工作区模式: {drawing_workspace_mode})")
 
         for msg in messages:
             role = msg.get("role")

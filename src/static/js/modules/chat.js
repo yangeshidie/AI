@@ -52,6 +52,8 @@ export function toggleDrawingWorkspace() {
         icon.innerText = 'block';
         text.innerText = '关闭';
         setDrawingWorkspaceEnabled(false);
+        clearDrawingWorkspaceImages();
+        updateDrawingWorkspaceUI();
         document.getElementById('drawingWorkspacePanel').style.display = 'none';
         appendMessage('system', '绘图工作区已关闭');
     }

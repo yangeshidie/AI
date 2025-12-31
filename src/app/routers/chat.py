@@ -189,7 +189,7 @@ async def chat_endpoint(request: ChatRequest):
         )
         
         # 2. 再进行多模态上下文增强
-        context_aware_messages = adapter.prepare_messages(current_messages)
+        context_aware_messages = adapter.prepare_messages(current_messages, request.drawing_workspace_mode)
         logger.debug(f"准备发送的消息数量: {len(context_aware_messages)}")
 
         logger.info(f"调用模型 API - {request.model}, Stream: {request.stream}")
