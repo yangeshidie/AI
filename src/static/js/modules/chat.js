@@ -375,30 +375,69 @@ function makeDraggable(element, handle) {
 
 export async function fetchModels() {
     updateConfigFromUI();
+    
+    const apiUrl = document.getElementById('apiUrl').value.trim();
+    const apiKey = document.getElementById('apiKey').value.trim();
     const select = document.getElementById('modelSelect');
+    
+    if (!apiUrl) {
+        alert("请先配置 API Base URL");
+        select.innerHTML = '<option>请配置API URL</option>';
+        return;
+    }
+    
+    if (!apiKey) {
+        alert("请先配置 API Key");
+        select.innerHTML = '<option>请配置API Key</option>';
+        return;
+    }
+    
     select.innerHTML = '<option>Loading...</option>';
+    
     try {
         const res = await fetch('/api/models', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                base_url: state.config.apiUrl,
-                api_url: state.config.apiUrl,
-                api_key: state.config.apiKey
+                base_url: apiUrl,
+                api_url: apiUrl,
+                api_key: apiKey
             })
         });
+        
         const data = await res.json();
+        
+        if (!res.ok || data.error) {
+            throw new Error(data.error || `HTTP ${res.status}`);
+        }
+        
         select.innerHTML = '';
+        
+        if (!data.models || data.models.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.innerText = '未找到可用模型';
+            select.appendChild(opt);
+            console.warn("API返回空模型列表");
+            return;
+        }
+        
         data.models.forEach(m => {
             const opt = document.createElement('option');
-            opt.value = m; opt.innerText = m;
+            opt.value = m;
+            opt.innerText = m;
             select.appendChild(opt);
         });
+        
         document.getElementById('current-model-display').innerText = "Model: " + select.value;
         select.addEventListener('change', function () {
             document.getElementById('current-model-display').innerText = "Model: " + this.value;
         });
-    } catch (e) { console.error("Load Models Failed", e); }
+    } catch (e) {
+        console.error("Load Models Failed:", e);
+        select.innerHTML = '<option>加载失败</option>';
+        alert(`获取模型列表失败: ${e.message}\n\n可能原因:\n1. API URL不正确\n2. API Key无效\n3. 该API不支持模型列表查询\n4. 网络连接问题`);
+    }
 }
 
 export function initChatListeners() {

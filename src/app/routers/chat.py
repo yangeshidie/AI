@@ -227,8 +227,12 @@ async def _stream_chat_response(client, model: str, messages: List[Dict[str, Any
                     yield f"data: {json.dumps({'content': content}, ensure_ascii=False)}\n\n"
         
         logger.info(f"流式响应完成，总内容长度: {len(full_content)}")
+        logger.debug(f"流式响应原始内容: {full_content[:500]}...")
         
         processed_content = adapter.process_response(full_content)
+        
+        logger.debug(f"处理后内容长度: {len(processed_content)}")
+        logger.debug(f"处理后内容预览: {processed_content[:500]}...")
         
         assistant_id = str(int(time.time() * 1000)) + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=9))
         
@@ -308,16 +312,34 @@ async def _non_stream_chat_response(client, model: str, messages: List[Dict[str,
 @router.post("/models")
 async def list_models(data: ModelListRequest) -> Dict[str, Any]:
     """获取可用模型列表"""
+    logger.info(f"获取模型列表请求 - API URL: {data.api_url}, API Key: {data.api_key[:10]}...")
+    
     try:
         client = OpenAI(
             base_url=data.api_url, 
             api_key=data.api_key,
-            max_retries=0  # 禁用自动重试
+            max_retries=0,
+            timeout=10.0
         )
+        logger.info("正在调用 models.list()...")
         models = client.models.list()
-        return {"models": sorted([m.id for m in models.data])}
+        model_list = [m.id for m in models.data]
+        logger.info(f"成功获取 {len(model_list)} 个模型")
+        return {"models": sorted(model_list)}
     except Exception as e:
-        return {"error": str(e), "models": []}
+        error_msg = str(e)
+        logger.error(f"获取模型列表失败: {error_msg}")
+        
+        if "401" in error_msg or "403" in error_msg:
+            return {"error": "API Key 无效或已过期", "models": []}
+        elif "404" in error_msg:
+            return {"error": "API URL 不正确或该API不支持模型列表查询", "models": []}
+        elif "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+            return {"error": "请求超时，请检查网络连接", "models": []}
+        elif "connection" in error_msg.lower():
+            return {"error": "无法连接到API服务器，请检查URL和网络", "models": []}
+        else:
+            return {"error": f"未知错误: {error_msg}", "models": []}
 
 
 @router.post("/edit_message")

@@ -180,19 +180,71 @@ class MultimodalAdapter:
         2. 识别 image_url (OpenAI 风格)
         3. 保存图片到本地
         4. 替换为 Markdown 图片链接
+        5. 保留所有其他 JSON 字段的内容
         """
+        logger.debug(f"process_response 输入长度: {len(response_content)}")
+        logger.debug(f"process_response 输入预览: {response_content[:200]}...")
+        
         # 1. 处理 JSON 格式的响应 (Gemini 经常返回 JSON)
         try:
             if response_content.strip().startswith("{") and response_content.strip().endswith("}"):
+                logger.info("检测到 JSON 格式响应")
                 data = json.loads(response_content)
+                logger.debug(f"JSON 字段: {list(data.keys())}")
+                
                 # 处理 image 字段 (Base64)
                 if "image" in data:
-                    return self._save_base64_image(data["image"], data.get("text", ""))
+                    logger.info("处理 image 字段")
+                    image_markdown = self._save_base64_image(data["image"], data.get("text", ""))
+                    # 收集所有其他字段的内容
+                    other_content = []
+                    for key, value in data.items():
+                        if key not in ["image", "image_url", "text"]:
+                            if isinstance(value, str):
+                                other_content.append(f"**{key}:** {value}")
+                            elif isinstance(value, (int, float, bool)):
+                                other_content.append(f"**{key}:** {value}")
+                            elif isinstance(value, list):
+                                other_content.append(f"**{key}:**\n" + "\n".join(f"- {item}" for item in value))
+                            elif isinstance(value, dict):
+                                other_content.append(f"**{key}:**\n" + json.dumps(value, ensure_ascii=False, indent=2))
+                    
+                    logger.debug(f"其他字段数量: {len(other_content)}")
+                    # 组合所有内容
+                    if other_content:
+                        result = image_markdown + "\n\n" + "\n\n".join(other_content)
+                        logger.debug(f"最终输出长度: {len(result)}")
+                        return result
+                    logger.debug(f"最终输出长度: {len(image_markdown)}")
+                    return image_markdown
+                
                 # 处理 image_url 字段
                 if "image_url" in data:
-                    return self._save_base64_image(data["image_url"], data.get("text", ""))
+                    logger.info("处理 image_url 字段")
+                    image_markdown = self._save_base64_image(data["image_url"], data.get("text", ""))
+                    # 收集所有其他字段的内容
+                    other_content = []
+                    for key, value in data.items():
+                        if key not in ["image", "image_url", "text"]:
+                            if isinstance(value, str):
+                                other_content.append(f"**{key}:** {value}")
+                            elif isinstance(value, (int, float, bool)):
+                                other_content.append(f"**{key}:** {value}")
+                            elif isinstance(value, list):
+                                other_content.append(f"**{key}:**\n" + "\n".join(f"- {item}" for item in value))
+                            elif isinstance(value, dict):
+                                other_content.append(f"**{key}:**\n" + json.dumps(value, ensure_ascii=False, indent=2))
+                    
+                    logger.debug(f"其他字段数量: {len(other_content)}")
+                    # 组合所有内容
+                    if other_content:
+                        result = image_markdown + "\n\n" + "\n\n".join(other_content)
+                        logger.debug(f"最终输出长度: {len(result)}")
+                        return result
+                    logger.debug(f"最终输出长度: {len(image_markdown)}")
+                    return image_markdown
         except json.JSONDecodeError:
-            pass
+            logger.debug("不是有效的 JSON 格式，继续处理 Markdown")
 
         # 2. 处理 Markdown 中的 Base64 图片
         # 格式: ![alt](data:image/png;base64,...)
