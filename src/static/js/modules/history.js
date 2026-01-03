@@ -61,16 +61,26 @@ export async function loadSession(filepath) {
 
         // 恢复智能体状态
         if (historyData.kb_id) {
-            setCurrentKB(historyData.kb_id);
             const kbInfo = await getKBInfo(historyData.kb_id);
             if (kbInfo) {
+                setCurrentKB(kbInfo);
                 document.getElementById('chat-title').innerText = kbInfo.name;
-                document.getElementById('chat-subtitle').innerText = kbInfo.description;
+                document.getElementById('chat-subtitle').innerText = "📚 知识库模式已激活";
+                document.getElementById('chat-mode-icon').innerText = "smart_toy";
+                document.getElementById('chat-mode-icon').style.color = "var(--accent)";
+            } else {
+                setCurrentKB(null);
+                document.getElementById('chat-title').innerText = "History Session";
+                document.getElementById('chat-subtitle').innerText = filepath;
+                document.getElementById('chat-mode-icon').innerText = "chat_bubble";
+                document.getElementById('chat-mode-icon').style.color = "var(--text-sub)";
             }
         } else {
             setCurrentKB(null);
             document.getElementById('chat-title').innerText = "History Session";
             document.getElementById('chat-subtitle').innerText = filepath;
+            document.getElementById('chat-mode-icon').innerText = "chat_bubble";
+            document.getElementById('chat-mode-icon').style.color = "var(--text-sub)";
         }
 
         document.getElementById('historyDrawer').classList.remove('open');
@@ -82,7 +92,7 @@ async function getKBInfo(kbId) {
     try {
         const res = await fetch('/api/kb/list');
         const data = await res.json();
-        return data.find(kb => kb.id === kbId);
+        return data.kbs.find(kb => kb.id === kbId);
     } catch (e) {
         console.error('获取知识库信息失败:', e);
         return null;
