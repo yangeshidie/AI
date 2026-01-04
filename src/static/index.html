@@ -338,6 +338,31 @@
         </div>
     </div>
 
+    <!-- 模态框：编辑知识库 -->
+    <div class="modal-backdrop" id="editKBModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑智能体</h3>
+                <button class="close-icon" onclick="closeModal('editKBModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editKbId">
+                <div class="form-group">
+                    <label>智能体名称</label>
+                    <input type="text" id="editKbName" class="input-dark" placeholder="例如: 公司财报助手">
+                </div>
+                <div class="form-group">
+                    <label>功能描述</label>
+                    <input type="text" id="editKbDesc" class="input-dark" placeholder="简单描述它的用途...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" onclick="closeModal('editKBModal')">取消</button>
+                <button class="primary-btn" onclick="submitEditKB()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 模态框：删除确认 -->
     <div class="modal-backdrop" id="deleteConfirmModal">
         <div class="modal-content" style="border-color: #ef4444;">

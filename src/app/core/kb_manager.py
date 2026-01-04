@@ -71,6 +71,26 @@ class KBManager:
             del data[kb_id]
             self._save(data)
 
+    def update_kb(self, kb_id: str, name: str, description: str) -> Optional[Dict[str, Any]]:
+        """
+        更新知识库信息
+
+        Args:
+            kb_id: 知识库ID
+            name: 新的名称
+            description: 新的描述
+
+        Returns:
+            更新后的知识库信息，如果知识库不存在则返回 None
+        """
+        data = self._load()
+        if kb_id not in data:
+            return None
+        data[kb_id]["name"] = name
+        data[kb_id]["description"] = description
+        self._save(data)
+        return data[kb_id]
+
     def find_kbs_using_file(self, filename: str) -> List[str]:
         """
         查找使用特定文件的所有知识库

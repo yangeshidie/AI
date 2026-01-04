@@ -42,6 +42,8 @@ window.loadKBList = KB.loadKBList;
 window.showCreateKBModal = KB.showCreateKBModal;
 window.submitCreateKB = KB.submitCreateKB;
 window.deleteKB = KB.deleteKB;
+window.showEditKBModal = KB.showEditKBModal;
+window.submitEditKB = KB.submitEditKB;
 
 // 文件
 window.handleRootUpload = Files.handleRootUpload;

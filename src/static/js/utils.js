@@ -30,6 +30,7 @@ export function appendMessage(role, text, raw = false, msgId = null) {
     // Helper function to render text
     const renderText = (content) => {
         const div = document.createElement('div');
+        div.className = 'message-content markdown-body';
         div.innerHTML = marked.parse(content || ''); // Handle null/undefined
         div.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightElement(block);

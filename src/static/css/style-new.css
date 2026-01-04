@@ -973,6 +973,15 @@ textarea::placeholder {
     overflow-wrap: break-word;
 }
 
+.msg-body {
+    width: 100%;
+    text-align: left;
+}
+
+.msg-body .message-content {
+    width: 100%;
+}
+
 .msg-content img {
     max-width: 100%;
     height: auto;
@@ -1027,6 +1036,28 @@ textarea::placeholder {
 .delete-btn:hover {
     background: rgba(239, 68, 68, 0.2);
     color: #ef4444;
+}
+
+.edit-btn {
+    position: absolute;
+    top: 16px;
+    right: 56px;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-normal);
+}
+
+.edit-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
 }
 
 .table-wrapper {

@@ -76,3 +76,10 @@ class CreateKBRequest(BaseModel):
 class DeleteKBRequest(BaseModel):
     """删除知识库请求"""
     kb_id: str
+
+
+class UpdateKBRequest(BaseModel):
+    """更新知识库请求"""
+    kb_id: str
+    name: str
+    description: str

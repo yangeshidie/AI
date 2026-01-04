@@ -15,12 +15,13 @@ export async function loadKBList() {
             card.className = 'kb-card';
             card.innerHTML = `
                 <button class="delete-btn" onclick="window.deleteKB('${kb.id}', event)">×</button>
+                <button class="edit-btn" onclick="window.showEditKBModal('${kb.id}', event)">✎</button>
                 <h4>${kb.name}</h4>
                 <p>${kb.description || "暂无描述"}</p>
                 <span class="tag">📚 ${kb.files.length} 个文件</span>
             `;
             card.onclick = (e) => {
-                if(e.target.className === 'delete-btn') return;
+                if(e.target.className === 'delete-btn' || e.target.className === 'edit-btn') return;
                 openKBChat(kb);
             };
             grid.appendChild(card);
@@ -83,5 +84,48 @@ export async function deleteKB(id, event) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({kb_id: id})
     });
+    loadKBList();
+}
+
+export function showEditKBModal(id, event) {
+    event.stopPropagation();
+    const modal = document.getElementById('editKBModal');
+    if (!modal) return;
+    
+    document.getElementById('editKbId').value = id;
+    document.getElementById('editKbName').value = '';
+    document.getElementById('editKbDesc').value = '';
+    
+    fetch('/api/kb/list').then(r => r.json()).then(data => {
+        const kb = data.kbs.find(k => k.id === id);
+        if (kb) {
+            document.getElementById('editKbName').value = kb.name;
+            document.getElementById('editKbDesc').value = kb.description || '';
+        }
+    });
+    
+    openModal('editKBModal');
+}
+
+export async function submitEditKB() {
+    const id = document.getElementById('editKbId').value;
+    const name = document.getElementById('editKbName').value;
+    const desc = document.getElementById('editKbDesc').value;
+
+    if (!name) return alert("请输入名称");
+
+    const res = await fetch('/api/kb/update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({kb_id: id, name, description: desc})
+    });
+
+    const data = await res.json();
+    if (data.status === 'error') {
+        alert(data.message);
+        return;
+    }
+
+    closeModal('editKBModal');
     loadKBList();
 }
