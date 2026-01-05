@@ -96,11 +96,26 @@ export function showEditKBModal(id, event) {
     document.getElementById('editKbName').value = '';
     document.getElementById('editKbDesc').value = '';
     
-    fetch('/api/kb/list').then(r => r.json()).then(data => {
-        const kb = data.kbs.find(k => k.id === id);
+    Promise.all([
+        fetch('/api/kb/list').then(r => r.json()),
+        fetch('/api/files/list').then(r => r.json())
+    ]).then(([kbData, fileData]) => {
+        const kb = kbData.kbs.find(k => k.id === id);
         if (kb) {
             document.getElementById('editKbName').value = kb.name;
             document.getElementById('editKbDesc').value = kb.description || '';
+            
+            const container = document.getElementById('editKbFileSelector');
+            container.innerHTML = '';
+            fileData.files.forEach(f => {
+                const isChecked = kb.files.includes(f.name) ? 'checked' : '';
+                container.innerHTML += `
+                    <label class="file-option">
+                        <input type="checkbox" value="${f.name}" ${isChecked}>
+                        <span>${f.name}</span>
+                    </label>
+                `;
+            });
         }
     });
     
@@ -111,13 +126,15 @@ export async function submitEditKB() {
     const id = document.getElementById('editKbId').value;
     const name = document.getElementById('editKbName').value;
     const desc = document.getElementById('editKbDesc').value;
+    const checkboxes = document.querySelectorAll('#editKbFileSelector input:checked');
+    const files = Array.from(checkboxes).map(cb => cb.value);
 
     if (!name) return alert("请输入名称");
 
     const res = await fetch('/api/kb/update', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({kb_id: id, name, description: desc})
+        body: JSON.stringify({kb_id: id, name, description: desc, files})
     });
 
     const data = await res.json();

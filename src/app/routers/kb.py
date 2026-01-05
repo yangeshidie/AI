@@ -35,7 +35,7 @@ async def delete_kb(req: DeleteKBRequest) -> Dict[str, str]:
 @router.post("/update")
 async def update_kb(req: UpdateKBRequest) -> Dict[str, Any]:
     """更新知识库"""
-    result = kb_manager.update_kb(req.kb_id, req.name, req.description)
+    result = kb_manager.update_kb(req.kb_id, req.name, req.description, req.files)
     if result is None:
         return {"status": "error", "message": "知识库不存在"}
     return {"status": "success", "kb": result}

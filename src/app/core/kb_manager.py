@@ -71,7 +71,7 @@ class KBManager:
             del data[kb_id]
             self._save(data)
 
-    def update_kb(self, kb_id: str, name: str, description: str) -> Optional[Dict[str, Any]]:
+    def update_kb(self, kb_id: str, name: str, description: str, files: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
         """
         更新知识库信息
 
@@ -79,6 +79,7 @@ class KBManager:
             kb_id: 知识库ID
             name: 新的名称
             description: 新的描述
+            files: 新的文件列表（可选）
 
         Returns:
             更新后的知识库信息，如果知识库不存在则返回 None
@@ -88,6 +89,8 @@ class KBManager:
             return None
         data[kb_id]["name"] = name
         data[kb_id]["description"] = description
+        if files is not None:
+            data[kb_id]["files"] = files
         self._save(data)
         return data[kb_id]
 

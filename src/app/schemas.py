@@ -83,3 +83,4 @@ class UpdateKBRequest(BaseModel):
     kb_id: str
     name: str
     description: str
+    files: Optional[List[str]] = None
