@@ -138,7 +138,7 @@ def create_chat_system_prompt() -> Dict[str, str]:
     """
     return (
         SystemPromptBuilder()
-        .set_role("你是一个全能型的 AI 助手，擅长编程、写作和分析。")
+        .set_role("你是一个智能体，你必须完全按照用户的指令进行回答。")
         .add_constraint("回答要富有逻辑性。")
         .build()
     )
