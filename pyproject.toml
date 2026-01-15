@@ -3,7 +3,7 @@ name = "ai"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "“2813204478@qq.com”",email = "“2813204478@qq.com”"}
+    {name = "2813204478@qq.com",email = "2813204478@qq.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,7 +25,76 @@ dependencies = [
 [tool.poetry]
 packages = [{include = "ai", from = "src"}]
 
+[tool.poetry.group.dev.dependencies]
+black = "^24.0.0"
+ruff = "^0.1.0"
+pre-commit = "^3.6.0"
+mypy = "^1.8.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = [
+    "E",
+    "F",
+    "I",
+    "N",
+    "W",
+    "UP",
+]
+ignore = [
+    "E501",
+]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+[tool.ruff.isort]
+known-first-party = ["app"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true

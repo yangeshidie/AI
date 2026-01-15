@@ -5,10 +5,13 @@
 """
 import os
 import socket
+import logging
 from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 
 def setup_network() -> None:
@@ -30,12 +33,12 @@ def setup_network() -> None:
             proxy_url = f"http://{proxy_host}:{proxy_port}"
             os.environ["HTTP_PROXY"] = proxy_url
             os.environ["HTTPS_PROXY"] = proxy_url
-            print(f"🌐 检测到代理 ({proxy_url})，使用代理访问 Hugging Face")
+            logger.info(f"🌐 检测到代理 ({proxy_url})，使用代理访问 Hugging Face")
         else:
             raise ConnectionError("Proxy not available")
     except Exception:
         os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
-        print("🪞 未检测到代理，使用 Hugging Face 镜像 (hf-mirror.com)")
+        logger.info("🪞 未检测到代理，使用 Hugging Face 镜像 (hf-mirror.com)")
 
 
 # 在加载其他模块前执行网络配置

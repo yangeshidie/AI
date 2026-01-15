@@ -4,6 +4,8 @@ from fastapi.responses import FileResponse
 import logging
 import os
 
+logger = logging.getLogger(__name__)
+
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
@@ -43,5 +45,5 @@ if __name__ == "__main__":
     # 确保生成的图片目录存在
     (STATIC_DIR / "generated_images").mkdir(parents=True, exist_ok=True)
     
-    print("🚀 Nexus AI Modularized Server Starting...")
+    logger.info("🚀 Nexus AI Modularized Server Starting...")
     uvicorn.run("main:app", host="127.0.0.1", port=9000, reload=True)

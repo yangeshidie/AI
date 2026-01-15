@@ -64,7 +64,10 @@ export async function submitCreateKB() {
     const checkboxes = document.querySelectorAll('#kbFileSelector input:checked');
     const files = Array.from(checkboxes).map(cb => cb.value);
 
-    if (!name) return alert("请输入名称");
+    if (!name) {
+        showToast('warning', '提示', '请输入名称');
+        return;
+    }
 
     await fetch('/api/kb/create', {
         method: 'POST',
@@ -129,7 +132,10 @@ export async function submitEditKB() {
     const checkboxes = document.querySelectorAll('#editKbFileSelector input:checked');
     const files = Array.from(checkboxes).map(cb => cb.value);
 
-    if (!name) return alert("请输入名称");
+    if (!name) {
+        showToast('warning', '提示', '请输入名称');
+        return;
+    }
 
     const res = await fetch('/api/kb/update', {
         method: 'POST',
@@ -139,7 +145,7 @@ export async function submitEditKB() {
 
     const data = await res.json();
     if (data.status === 'error') {
-        alert(data.message);
+        showToast('error', '错误', data.message);
         return;
     }
 

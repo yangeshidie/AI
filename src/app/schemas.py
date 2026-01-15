@@ -3,7 +3,7 @@
 Pydantic 数据模型定义
 包含所有 API 请求/响应模型
 """
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Union
 
 from pydantic import BaseModel
 
@@ -44,12 +44,19 @@ class LoadHistoryRequest(BaseModel):
 # 聊天相关模型
 # =============================================================================
 
+class MessageContent(BaseModel):
+    """消息内容项（多模态）"""
+    type: str
+    text: Optional[str] = None
+    image_url: Optional[Dict[str, str]] = None
+
+
 class ChatRequest(BaseModel):
     """聊天请求"""
     api_url: str
     api_key: str
     model: str
-    messages: list
+    messages: List[Dict[str, Any]]
     session_file: Optional[str] = None
     kb_id: Optional[str] = None
     stream: bool = False

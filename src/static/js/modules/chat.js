@@ -381,13 +381,13 @@ export async function fetchModels() {
     const select = document.getElementById('modelSelect');
     
     if (!apiUrl) {
-        alert("请先配置 API Base URL");
+        showToast('warning', '提示', '请先配置 API Base URL');
         select.innerHTML = '<option>请配置API URL</option>';
         return;
     }
     
     if (!apiKey) {
-        alert("请先配置 API Key");
+        showToast('warning', '提示', '请先配置 API Key');
         select.innerHTML = '<option>请配置API Key</option>';
         return;
     }
@@ -436,7 +436,7 @@ export async function fetchModels() {
     } catch (e) {
         console.error("Load Models Failed:", e);
         select.innerHTML = '<option>加载失败</option>';
-        alert(`获取模型列表失败: ${e.message}\n\n可能原因:\n1. API URL不正确\n2. API Key无效\n3. 该API不支持模型列表查询\n4. 网络连接问题`);
+        showToast('error', '获取模型列表失败', '请检查 API URL、API Key 和网络连接');
     }
 }
 
@@ -458,7 +458,7 @@ export function initChatListeners() {
 
 export function saveConfig() {
     updateConfigFromUI();
-    alert("配置已更新 (仅本次会话有效)");
+    showToast('success', '配置已更新', '仅本次会话有效');
 }
 
 export function loadConfig() {

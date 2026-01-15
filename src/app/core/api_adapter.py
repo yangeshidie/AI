@@ -8,7 +8,7 @@ import json
 import logging
 import re
 import uuid
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional, Union, Tuple
 from pathlib import Path
 from io import BytesIO
 from PIL import Image
@@ -23,7 +23,7 @@ class MultimodalAdapter:
     处理图片上下文持久化和响应中的图片提取
     """
     
-    def __init__(self, image_save_dir: Path = None):
+    def __init__(self, image_save_dir: Optional[Path] = None) -> None:
         self.image_save_dir = image_save_dir or (STATIC_DIR / "generated_images")
         self.image_save_dir.mkdir(parents=True, exist_ok=True)
         self.max_history_images = 2  # 最多保留最近的 N 张图片上下文
@@ -37,7 +37,7 @@ class MultimodalAdapter:
             messages: 消息列表
             drawing_workspace_mode: 是否为绘图工作区模式（绘图工作区模式支持20张图片，普通模式支持2张）
         """
-        normalized_messages = []
+        normalized_messages: List[Dict[str, Any]] = []
         
         # 根据模式设置图片上限
         max_images = 20 if drawing_workspace_mode else 2
@@ -80,7 +80,7 @@ class MultimodalAdapter:
             content = msg.get("content")
             
             # 构建新的消息体
-            new_content = []
+            new_content: List[Dict[str, Any]] = []
             
             # Case A: Multimodal List (Existing Logic)
             if isinstance(content, list):
@@ -250,7 +250,7 @@ class MultimodalAdapter:
         # 格式: ![alt](data:image/png;base64,...)
         pattern = r'!\[(.*?)\]\(data:image\/(.*?);base64,([^\)]+)\)'
         
-        def replace_match(match):
+        def replace_match(match: re.Match) -> str:
             alt_text = match.group(1)
             ext = match.group(2)
             base64_str = match.group(3)
@@ -313,14 +313,14 @@ class MultimodalAdapter:
             logger.error(f"保存 Base64 图片失败: {e}")
             return text_content  # 如果保存失败，至少返回文本
 
-    def _extract_text_from_content(self, content: Union[str, List]) -> str:
+    def _extract_text_from_content(self, content: Union[str, List[Dict[str, Any]]]) -> str:
         if isinstance(content, str):
             return content
         if isinstance(content, list):
             return " ".join([item["text"] for item in content if item.get("type") == "text"])
         return ""
 
-    def _extract_images_from_content(self, content: Union[str, List]) -> List[str]:
+    def _extract_images_from_content(self, content: Union[str, List[Dict[str, Any]]]) -> List[str]:
         images = []
         if isinstance(content, list):
             for item in content:

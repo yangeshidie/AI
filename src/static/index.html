@@ -83,6 +83,12 @@
                         </div>
                     </div>
                     <div class="top-actions">
+                        <button class="action-icon-btn" onclick="toggleSearch()" title="搜索消息">
+                            <span class="material-symbols-outlined">search</span>
+                        </button>
+                        <button class="action-icon-btn" onclick="exportChat()" title="导出对话">
+                            <span class="material-symbols-outlined">download</span>
+                        </button>
                         <button class="action-icon-btn" onclick="startNewChat()" title="新对话">
                             <span class="material-symbols-outlined">add</span>
                         </button>
@@ -91,6 +97,24 @@
                         </button>
                     </div>
                 </header>
+
+                <!-- 搜索栏 -->
+                <div class="search-bar" id="searchBar" style="display: none;">
+                    <div class="search-input-wrapper">
+                        <span class="material-symbols-outlined search-icon">search</span>
+                        <input type="text" id="searchInput" placeholder="搜索消息内容..." oninput="handleSearch(this.value)">
+                        <span class="search-count" id="searchCount">0/0</span>
+                        <button class="search-nav-btn" onclick="navigateSearch(-1)" title="上一个">
+                            <span class="material-symbols-outlined">arrow_upward</span>
+                        </button>
+                        <button class="search-nav-btn" onclick="navigateSearch(1)" title="下一个">
+                            <span class="material-symbols-outlined">arrow_downward</span>
+                        </button>
+                        <button class="search-close-btn" onclick="toggleSearch()">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- 聊天滚动区 -->
                 <div class="chat-area" id="chatBox">

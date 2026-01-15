@@ -143,7 +143,7 @@ export async function saveCurrentPrompt() {
     const content = input ? input.value.trim() : '';
     
     if (!content) {
-        alert('请先输入提示词内容');
+        showToast('warning', '提示', '请先输入提示词内容');
         return;
     }
     
@@ -154,9 +154,9 @@ export async function saveCurrentPrompt() {
     
     const result = await savePrompt(name.trim(), content);
     if (result) {
-        alert('提示词已保存');
+        showToast('success', '保存成功', '提示词已保存');
         renderPromptsList('promptsListContent');
     } else {
-        alert('保存失败');
+        showToast('error', '保存失败', '请重试');
     }
 }

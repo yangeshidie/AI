@@ -5,7 +5,7 @@
 """
 import json
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Set
 
 from app.config import BASE_DIR
 
@@ -48,7 +48,7 @@ class FileManager:
     def get_all_groups(self) -> List[str]:
         """获取所有已使用的分组名称"""
         data = self._load()
-        groups: set = set()
+        groups: Set[str] = set()
         for meta in data.values():
             if "group" in meta:
                 groups.add(meta["group"])
@@ -71,4 +71,4 @@ class FileManager:
 
 
 # 模块级单例实例
-file_manager = FileManager()
+file_manager: FileManager = FileManager()

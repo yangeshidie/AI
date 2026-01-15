@@ -4,7 +4,7 @@ RAG 引擎模块
 负责文本向量化存储和检索
 """
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 import chromadb
 from chromadb.utils import embedding_functions
@@ -14,10 +14,10 @@ from app.config import CHROMA_PATH
 # =============================================================================
 # RAG 引擎初始化
 # =============================================================================
-_chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
-_embedding_fn = None
+_chroma_client: chromadb.PersistentClient = chromadb.PersistentClient(path=CHROMA_PATH)
+_embedding_fn: Optional[embedding_functions.SentenceTransformerEmbeddingFunction] = None
 
-def _get_embedding_function():
+def _get_embedding_function() -> embedding_functions.SentenceTransformerEmbeddingFunction:
     """延迟加载 embedding function 以避免 uvicorn reload 模式下的多进程问题"""
     global _embedding_fn
     if _embedding_fn is None:
@@ -26,9 +26,9 @@ def _get_embedding_function():
         )
     return _embedding_fn
 
-_collection = None
+_collection: Optional[chromadb.Collection] = None
 
-def _get_collection():
+def _get_collection() -> chromadb.Collection:
     """延迟加载 collection 以避免 uvicorn reload 模式下的多进程问题"""
     global _collection
     if _collection is None:

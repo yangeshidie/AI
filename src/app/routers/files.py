@@ -5,6 +5,7 @@
 import os
 import io
 import datetime
+import logging
 from typing import Dict, Any, List
 
 import PyPDF2
@@ -15,6 +16,8 @@ from app.schemas import FileActionRequest, SetGroupRequest
 from app.core.rag_engine import add_text_to_rag, delete_from_rag, rename_in_rag
 from app.core.kb_manager import kb_manager
 from app.core.file_manager import file_manager
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/files", tags=["files"])
 
@@ -147,5 +150,5 @@ async def extract_text_from_upload(file: UploadFile = File(...)) -> Dict[str, st
         text = _extract_text_from_file(filename, content)
         return {"filename": filename, "text": text}
     except Exception as e:
-        print(f"Error extracting text: {e}")
+        logger.error(f"Error extracting text: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to extract text: {str(e)}")

@@ -50,9 +50,9 @@ export async function applyConfig(name) {
             window.fetchModels();
         }
 
-        alert(`已应用配置: ${name}`);
+        showToast('success', '配置已应用', `已应用配置: ${name}`);
     } catch (e) {
-        alert("应用配置失败: " + e.message);
+        showToast('error', '应用配置失败', e.message);
     }
 }
 
@@ -80,7 +80,7 @@ export async function saveNewConfig() {
     const key = document.getElementById('newConfigKey').value.trim();
 
     if (!name || !url) {
-        alert("名称和 API URL 必填");
+        showToast('warning', '提示', '名称和 API URL 必填');
         return;
     }
 
@@ -97,13 +97,13 @@ export async function saveNewConfig() {
 
         const data = await res.json();
         if (res.ok) {
-            alert("配置保存成功");
+            showToast('success', '保存成功', '配置已保存');
             closeAddConfigModal();
             loadConfigs(); // 刷新列表
         } else {
-            alert("保存失败: " + data.detail);
+            showToast('error', '保存失败', data.detail);
         }
     } catch (e) {
-        alert("保存错误: " + e.message);
+        showToast('error', '保存错误', e.message);
     }
 }

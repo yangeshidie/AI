@@ -85,7 +85,9 @@ export async function loadSession(filepath) {
 
         document.getElementById('historyDrawer').classList.remove('open');
 
-    } catch (e) { alert("加载失败: " + e); }
+    } catch (e) { 
+        showToast('error', '加载失败', e.message || e);
+    }
 }
 
 async function getKBInfo(kbId) {
@@ -109,7 +111,9 @@ export async function renameHistory(fullPath, oldName) {
             body: JSON.stringify({ filename: fullPath, new_name: newName })
         });
         loadHistoryList();
-    } catch (e) { alert("失败: " + e); }
+    } catch (e) { 
+        showToast('error', '重命名失败', e.message || e);
+    }
 }
 
 export async function deleteHistory(fullPath) {
@@ -124,5 +128,7 @@ export async function deleteHistory(fullPath) {
         if (state.currentSessionFile && state.currentSessionFile.includes(fullPath.split('/')[1])) {
             startNewChat();
         }
-    } catch (e) { alert("失败: " + e); }
+    } catch (e) { 
+        showToast('error', '删除失败', e.message || e);
+    }
 }

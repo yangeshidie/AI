@@ -93,7 +93,9 @@ export async function changeGroup(filename, oldGroup) {
             body: JSON.stringify({ filename, group: newGroup })
         });
         loadRootFiles();
-    } catch(e) { alert("设置失败"); }
+    } catch(e) { 
+        showToast('error', '设置失败', e.message || '未知错误');
+    }
 }
 
 export async function handleRootUpload(input) {
@@ -122,7 +124,9 @@ export async function renameFile(oldName) {
         const data = await res.json();
         if(!res.ok) throw new Error(data.detail);
         loadRootFiles();
-    } catch(e) { alert("重命名失败: " + e.message); }
+    } catch(e) { 
+        showToast('error', '重命名失败', e.message);
+    }
 }
 
 export async function tryDeleteFile(filename) {
@@ -148,7 +152,9 @@ export async function tryDeleteFile(filename) {
             affectedBox.style.display = 'none';
         }
         openModal('deleteConfirmModal');
-    } catch(e) { alert("请求失败: " + e); }
+    } catch(e) { 
+        showToast('error', '请求失败', e.message || '未知错误');
+    }
 }
 
 export async function confirmDeleteFile() {

@@ -71,7 +71,7 @@ def _prepare_messages_with_system_prompt(
     if kb_id and user_query:
         kb_info = kb_manager.get_kb(kb_id)
         if kb_info:
-            print(f"🤖 激活 Agent: {kb_info['name']}")
+            logger.info(f"🤖 激活 Agent: {kb_info['name']}")
             context = query_rag_with_filter(user_query, kb_info['files'])
             system_msg = create_rag_system_prompt(
                 kb_name=kb_info['name'],
