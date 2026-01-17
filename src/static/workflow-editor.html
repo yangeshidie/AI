@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工作流编辑器 - Nexus AI</title>
+    <link rel="stylesheet" href="/static/css/workflow-editor.css">
+</head>
+<body>
+    <div id="workflowEditorContainer"></div>
+
+    <script src="/static/js/workflow-editor.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            workflowEditor = new WorkflowEditor('workflowEditorContainer');
+        });
+    </script>
+</body>
+</html>
