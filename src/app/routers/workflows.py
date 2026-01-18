@@ -2,10 +2,12 @@
 """
 工作流相关 API 路由
 """
+import os
 import logging
 from typing import Dict, List, Any
 
 from fastapi import APIRouter, HTTPException
+from dotenv import load_dotenv
 
 from app.workflow import (
     WorkflowDefinition,
@@ -343,3 +345,27 @@ async def get_workflow_template(template_name: str) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="模板不存在")
 
     return templates[template_name]
+
+
+@router.get("/configs")
+async def get_configs() -> Dict[str, List[Dict[str, Any]]]:
+    """获取所有配置预设"""
+    try:
+        load_dotenv(override=True)
+        configs = []
+        for key in os.environ:
+            if key.startswith("PROXY_BASE_URL_"):
+                config_name = key.replace("PROXY_BASE_URL_", "")
+                base_url = os.getenv(key)
+                api_key = os.getenv(f"PROXY_API_KEY_{config_name}", "")
+                
+                configs.append({
+                    "name": config_name,
+                    "api_url": base_url,
+                    "api_key": api_key
+                })
+        
+        return {"configs": sorted(configs, key=lambda x: x["name"])}
+    except Exception as e:
+        logger.error(f"获取配置列表失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))

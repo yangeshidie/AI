@@ -7,6 +7,7 @@
     <title>Nexus AI Workbench</title>
     <!-- CSS 路径修改 -->
     <link rel="stylesheet" href="/static/css/style-new.css?v=3.1">
+    <link rel="stylesheet" href="/static/css/workflow-editor.css?v=1.0">
 
     <!-- 图标库 & 第三方库保持不变 -->
     <link rel="stylesheet"
@@ -42,6 +43,10 @@
                 <button class="menu-item active" onclick="switchView('chat')">
                     <span class="material-symbols-outlined">chat_bubble</span>
                     <span>对话</span>
+                </button>
+                <button class="menu-item" onclick="switchView('workflow')">
+                    <span class="material-symbols-outlined">account_tree</span>
+                    <span>工作流</span>
                 </button>
                 <button class="menu-item" onclick="switchView('agents')">
                     <span class="material-symbols-outlined">smart_toy</span>
@@ -212,7 +217,79 @@
                 </div>
             </div>
 
-            <!-- 2. 智能体库视图 -->
+            <!-- 3. 工作流视图 -->
+            <div id="view-workflow" class="view-section">
+                <header class="top-bar">
+                    <div class="page-title">
+                        <span class="material-symbols-outlined" style="font-size: 20px; color: var(--accent); padding: 8px; background: rgba(59, 130, 246, 0.1); border-radius: 6px;">account_tree</span>
+                        <div>
+                            <h3>工作流编排</h3>
+                            <p>可视化构建 AI 应用流程</p>
+                        </div>
+                    </div>
+                    <div class="top-actions">
+                        <button class="primary-btn" onclick="workflowEditor.saveWorkflow()">
+                            <span class="material-symbols-outlined">save</span> 保存
+                        </button>
+                        <button class="secondary-btn" onclick="workflowEditor.loadTemplate()">
+                            <span class="material-symbols-outlined">template</span> 模板
+                        </button>
+                        <button class="secondary-btn" onclick="workflowEditor.clearAll()">
+                            <span class="material-symbols-outlined">delete</span> 清空
+                        </button>
+                    </div>
+                </header>
+
+                <div class="workflow-container">
+                    <div class="workflow-toolbar">
+                        <button class="workflow-tool-btn" onclick="workflowEditor.addNode('llm')">
+                            <span class="material-symbols-outlined">chat</span>
+                            <span>LLM</span>
+                        </button>
+                        <button class="workflow-tool-btn" onclick="workflowEditor.addNode('rag')">
+                            <span class="material-symbols-outlined">search</span>
+                            <span>RAG</span>
+                        </button>
+                        <button class="workflow-tool-btn" onclick="workflowEditor.addNode('code')">
+                            <span class="material-symbols-outlined">code</span>
+                            <span>代码</span>
+                        </button>
+                        <button class="workflow-tool-btn" onclick="workflowEditor.addNode('condition')">
+                            <span class="material-symbols-outlined">call_split</span>
+                            <span>条件</span>
+                        </button>
+                        <button class="workflow-tool-btn" onclick="workflowEditor.addNode('http')">
+                            <span class="material-symbols-outlined">http</span>
+                            <span>HTTP</span>
+                        </button>
+                        <button class="workflow-tool-btn" onclick="workflowEditor.addNode('variable')">
+                            <span class="material-symbols-outlined">data_object</span>
+                            <span>变量</span>
+                        </button>
+                        <button class="workflow-tool-btn" onclick="workflowEditor.addNode('template')">
+                            <span class="material-symbols-outlined">text_fields</span>
+                            <span>模板</span>
+                        </button>
+                    </div>
+
+                    <div class="workflow-canvas" id="workflowCanvas">
+                        <svg class="connections-layer" id="connectionsLayer"></svg>
+                        <div class="nodes-layer" id="nodesLayer"></div>
+                    </div>
+
+                    <div class="node-properties" id="nodeProperties">
+                        <div class="properties-header">
+                            <h3>节点属性</h3>
+                            <button class="close-icon" onclick="workflowEditor.deselectNode()">×</button>
+                        </div>
+                        <div id="propertiesContent">
+                            <p style="color: #666; text-align: center; padding: 20px;">选择一个节点查看属性</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 智能体库视图 -->
             <div id="view-agents" class="view-section">
                 <header class="top-bar">
                     <div class="page-title">
@@ -484,6 +561,7 @@
     </div>
 
     <script type="module" src="/static/js/main.js"></script>
+    <script src="/static/js/workflow-editor.js"></script>
 </body>
 
 </html>

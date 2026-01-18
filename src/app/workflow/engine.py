@@ -4,6 +4,7 @@
 负责解析和执行工作流定义
 """
 import json
+import os
 import uuid
 import time
 import asyncio
@@ -241,12 +242,33 @@ class WorkflowEngine:
     async def _execute_llm_node(self, node: Dict[str, Any], stream: bool) -> str:
         """执行 LLM 节点"""
         data = node.get("data", {})
-        model = data.get("model", "gpt-3.5-turbo")
-        api_url = data.get("api_url", "https://api.openai.com/v1")
-        api_key = data.get("api_key", "")
+        config_id = data.get("config_id", "")
+        
+        # 从配置预设加载配置
+        if config_id:
+            from dotenv import load_dotenv
+            load_dotenv(override=True)
+            
+            base_url = os.getenv(f"PROXY_BASE_URL_{config_id}")
+            api_key = os.getenv(f"PROXY_API_KEY_{config_id}", "")
+            
+            if base_url:
+                model = data.get("model", "gpt-3.5-turbo")
+                api_url = base_url
+            else:
+                model = data.get("model", "gpt-3.5-turbo")
+                api_url = data.get("api_url", "https://api.openai.com/v1")
+                api_key = data.get("api_key", "")
+        else:
+            model = data.get("model", "gpt-3.5-turbo")
+            api_url = data.get("api_url", "https://api.openai.com/v1")
+            api_key = data.get("api_key", "")
+        
         system_prompt = data.get("system_prompt", "")
         temperature = data.get("temperature", 0.7)
         max_tokens = data.get("max_tokens")
+        enable_structured_output = data.get("enable_structured_output", False)
+        structured_output_schema = data.get("structured_output_schema")
 
         # 解析变量
         if system_prompt:
@@ -264,14 +286,36 @@ class WorkflowEngine:
 
         client = OpenAI(base_url=api_url, api_key=api_key)
 
+        # 构建请求参数
+        request_params = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature
+        }
+        
+        if max_tokens:
+            request_params["max_tokens"] = max_tokens
+        
+        # 支持结构化输出
+        if enable_structured_output and structured_output_schema:
+            try:
+                schema = json.loads(structured_output_schema)
+                request_params["response_format"] = {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "structured_response",
+                        "strict": True,
+                        "schema": schema
+                    }
+                }
+            except json.JSONDecodeError as e:
+                logger.warning(f"结构化输出 Schema 解析失败: {e}")
+
         if stream:
             # 流式输出
             full_content = ""
             stream_response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
+                **request_params,
                 stream=True
             )
             for chunk in stream_response:
@@ -280,12 +324,7 @@ class WorkflowEngine:
                     full_content += content
             return full_content
         else:
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
+            response = client.chat.completions.create(**request_params)
             return response.choices[0].message.content
 
     async def _execute_rag_node(self, node: Dict[str, Any]) -> str:

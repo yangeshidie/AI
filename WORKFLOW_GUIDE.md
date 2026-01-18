@@ -8,15 +8,15 @@ Nexus AI 工作流系统是一个基于 Dify 灵感开发的可视化工作流�
 
 ### 1. 节点类型
 
-| 节点类型 | 功能 | 配置参数 |
-|---------|------|---------|
-| **LLM** | 调用大语言模型 | model, api_url, api_key, system_prompt, temperature, user_message |
-| **RAG** | 检索增强生成 | kb_ids, query, top_k |
-| **Code** | 执行 Python 代码 | code, timeout |
-| **Condition** | 条件分支判断 | conditions, default_branch |
-| **HTTP** | 发送 HTTP 请求 | url, method, headers, body, timeout |
-| **Variable** | 定义变量 | variable_name, default_value, variable_type |
-| **Template** | 文本模板 | template |
+| 节点类型            | 功能             | 配置参数                                                          |
+| ------------------- | ---------------- | ----------------------------------------------------------------- |
+| **LLM**       | 调用大语言模型   | model, api_url, api_key, system_prompt, temperature, user_message |
+| **RAG**       | 检索增强生成     | kb_ids, query, top_k                                              |
+| **Code**      | 执行 Python 代码 | code, timeout                                                     |
+| **Condition** | 条件分支判断     | conditions, default_branch                                        |
+| **HTTP**      | 发送 HTTP 请求   | url, method, headers, body, timeout                               |
+| **Variable**  | 定义变量         | variable_name, default_value, variable_type                       |
+| **Template**  | 文本模板         | template                                                          |
 
 ### 2. 变量引用
 
@@ -38,16 +38,19 @@ Nexus AI 工作流系统是一个基于 Dify 灵感开发的可视化工作流�
 系统提供了三个预置模板：
 
 #### 简单对话 (simple_chat)
+
 ```
 [START] → [LLM] → [END]
 ```
 
 #### RAG 对话 (rag_chat)
+
 ```
 [START] → [RAG] → [Template] → [LLM] → [END]
 ```
 
 #### 条件分支 (conditional_flow)
+
 ```
               → [LLM Admin] ─┐
 [START] → [Condition] ─┼→ [LLM User] ─→ [END]
@@ -353,16 +356,16 @@ app/
 async def _execute_custom_node(self, node: Dict[str, Any]) -> Any:
     """执行自定义节点"""
     data = node.get("data", {})
-    
+  
     # 获取节点配置
     config = data.get("config", {})
-    
+  
     # 解析变量
     resolved_config = self._resolve_variables(config)
-    
+  
     # 执行自定义逻辑
     result = self._do_custom_logic(resolved_config)
-    
+  
     return result
 ```
 

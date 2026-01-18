@@ -1,23 +1,62 @@
-/* 工作流编辑器样式 */
-.workflow-toolbar {
+/* 工作流编辑器样式 - 与主页面风格一致 */
+
+/* 工作流容器 */
+.workflow-container {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 15px;
-    background: #f5f5f5;
-    border-bottom: 1px solid #ddd;
-    flex-wrap: wrap;
-}
-
-.toolbar-spacer {
     flex: 1;
+    overflow: hidden;
+    background: var(--bg-app);
 }
 
+/* 工作流工具栏 */
+.workflow-toolbar {
+    width: 60px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 8px;
+    flex-shrink: 0;
+}
+
+.workflow-tool-btn {
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--secondary);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    transition: all 0.2s;
+    padding: 4px;
+}
+
+.workflow-tool-btn:hover {
+    background: var(--bg-hover);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.workflow-tool-btn .material-symbols-outlined {
+    font-size: 20px;
+}
+
+.workflow-tool-btn span:last-child {
+    font-size: 10px;
+    font-weight: 500;
+}
+
+/* 工作流画布 */
 .workflow-canvas {
+    flex: 1;
     position: relative;
-    width: 100%;
-    height: calc(100vh - 80px);
-    background: #fafafa;
+    background: var(--bg-app);
     overflow: auto;
 }
 
@@ -38,77 +77,81 @@
     height: 100%;
 }
 
+/* 工作流节点 */
 .workflow-node {
     position: absolute;
-    width: 150px;
-    min-height: 80px;
-    background: white;
-    border: 2px solid #ddd;
+    width: 160px;
+    min-height: 90px;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
     border-radius: 8px;
     cursor: move;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: box-shadow 0.2s, border-color 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
 }
 
 .workflow-node:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .workflow-node.selected {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
 
+/* 节点类型颜色 */
 .node-llm {
-    border-left: 4px solid #28a745;
+    border-left: 4px solid #3b82f6;
 }
 
 .node-rag {
-    border-left: 4px solid #17a2b8;
+    border-left: 4px solid #10b981;
 }
 
 .node-code {
-    border-left: 4px solid #ffc107;
+    border-left: 4px solid #f59e0b;
 }
 
 .node-condition {
-    border-left: 4px solid #dc3545;
+    border-left: 4px solid #ef4444;
 }
 
 .node-http {
-    border-left: 4px solid #6f42c1;
+    border-left: 4px solid #8b5cf6;
 }
 
 .node-variable {
-    border-left: 4px solid #6c757d;
+    border-left: 4px solid #6b7280;
 }
 
 .node-template {
-    border-left: 4px solid #fd7e14;
+    border-left: 4px solid #f97316;
 }
 
+/* 节点头部 */
 .node-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #eee;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-color);
     border-radius: 6px 6px 0 0;
 }
 
 .node-title {
     font-weight: 600;
     font-size: 14px;
-    color: #333;
+    color: var(--primary);
 }
 
 .node-delete {
-    background: none;
+    background: transparent;
     border: none;
     font-size: 20px;
     line-height: 1;
-    color: #999;
+    color: var(--secondary);
     cursor: pointer;
     padding: 0;
     width: 20px;
@@ -116,164 +159,356 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: background 0.2s, color 0.2s;
+    border-radius: 4px;
+    transition: all 0.2s;
 }
 
 .node-delete:hover {
-    background: #dc3545;
+    background: #ef4444;
     color: white;
 }
 
+/* 节点主体 */
 .node-body {
-    padding: 10px 12px;
+    padding: 12px;
 }
 
 .node-id {
     font-size: 11px;
-    color: #999;
-    font-family: monospace;
+    color: var(--secondary);
+    font-family: 'Courier New', monospace;
 }
 
+/* 节点端口 */
 .node-port {
     position: absolute;
-    width: 12px;
-    height: 12px;
-    background: #007bff;
-    border: 2px solid white;
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    border: 3px solid var(--bg-card);
     border-radius: 50%;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.node-port::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border-radius: 50%;
 }
 
 .node-port:hover {
     transform: scale(1.3);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.node-port.connecting {
+    background: #22c55e;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
 }
 
 .node-port-input {
-    left: -6px;
+    left: -10px;
     top: 50%;
     transform: translateY(-50%);
 }
 
 .node-port-output {
-    right: -6px;
+    right: -10px;
     top: 50%;
     transform: translateY(-50%);
 }
 
+/* 连接线 */
+.connection-path {
+    stroke: #666;
+    stroke-width: 3;
+    fill: none;
+    marker-end: url(#arrowhead);
+    transition: stroke 0.2s, stroke-width 0.2s;
+}
+
+.connection-path:hover {
+    stroke: var(--accent);
+    stroke-width: 4;
+    filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.5));
+}
+
+/* 节点属性面板 */
 .node-properties {
-    position: fixed;
-    right: 0;
-    top: 80px;
-    width: 350px;
-    height: calc(100vh - 80px);
-    background: white;
-    border-left: 1px solid #ddd;
-    box-shadow: -2px 0 8px rgba(0,0,0,0.1);
-    padding: 20px;
+    width: 320px;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.properties-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.properties-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.properties-header .close-icon {
+    background: transparent;
+    border: none;
+    color: var(--secondary);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.properties-header .close-icon:hover {
+    background: var(--bg-hover);
+    color: #fff;
+}
+
+#propertiesContent {
+    flex: 1;
     overflow-y: auto;
-    z-index: 1000;
+    padding: 20px;
 }
 
-.node-properties h3 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 18px;
-    color: #333;
-}
-
+/* 属性组 */
 .property-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .property-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     font-weight: 500;
     font-size: 13px;
-    color: #555;
+    color: var(--secondary);
+}
+
+/* 连接信息样式 */
+.connections-info {
+    background: var(--bg-app);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.connection-item {
+    margin-bottom: 12px;
+}
+
+.connection-item:last-child {
+    margin-bottom: 0;
+}
+
+.connection-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 6px;
+}
+
+.connection-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.connection-list li {
+    font-size: 12px;
+    color: var(--primary);
+    padding: 4px 8px;
+    background: var(--bg-hover);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.connection-list li::before {
+    content: '→';
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.no-connections {
+    text-align: center;
+    color: var(--secondary);
+    font-size: 12px;
+    padding: 12px;
+    font-style: italic;
 }
 
 .property-group input,
+.property-group select,
 .property-group textarea {
     width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 10px 12px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--primary);
     font-size: 13px;
     font-family: inherit;
     transition: border-color 0.2s;
 }
 
 .property-group input:focus,
+.property-group select:focus,
 .property-group textarea:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: var(--accent);
+}
+
+.property-group input[readonly] {
+    background: var(--bg-hover);
+    color: var(--secondary);
+    cursor: not-allowed;
 }
 
 .property-group textarea {
     min-height: 80px;
     resize: vertical;
     font-family: 'Courier New', monospace;
+    line-height: 1.5;
 }
 
-.property-group input[readonly] {
-    background: #f5f5f5;
-    color: #999;
+.property-group select {
+    cursor: pointer;
 }
 
-.btn {
-    padding: 8px 16px;
+/* 按钮样式 */
+.primary-btn,
+.secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
 }
 
-.btn:hover {
+.primary-btn {
+    background: var(--accent);
+    color: white;
+}
+
+.primary-btn:hover {
+    background: var(--accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.btn:active {
-    transform: translateY(0);
+.secondary-btn {
+    background: var(--bg-hover);
+    color: var(--primary);
+    border: 1px solid var(--border-color);
 }
 
-.btn-primary {
-    background: #007bff;
-    color: white;
+.secondary-btn:hover {
+    background: var(--bg-card);
+    border-color: var(--accent);
 }
 
-.btn-primary:hover {
-    background: #0056b3;
+/* 顶部操作按钮 */
+.top-actions {
+    display: flex;
+    gap: 10px;
 }
 
-.btn-success {
-    background: #28a745;
-    color: white;
+.top-actions .primary-btn,
+.top-actions .secondary-btn {
+    padding: 8px 16px;
+    font-size: 13px;
 }
 
-.btn-success:hover {
-    background: #1e7e34;
+/* 滚动条样式 */
+#propertiesContent::-webkit-scrollbar {
+    width: 6px;
 }
 
-.btn-info {
-    background: #17a2b8;
-    color: white;
+#propertiesContent::-webkit-scrollbar-track {
+    background: var(--bg-app);
 }
 
-.btn-info:hover {
-    background: #117a8b;
+#propertiesContent::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
 }
 
-.btn-warning {
-    background: #ffc107;
-    color: #212529;
+#propertiesContent::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary);
 }
 
-.btn-warning:hover {
-    background: #d39e00;
+/* 复选框样式 */
+.property-group input[type="checkbox"] {
+    width: auto;
+    padding: 0;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .node-properties {
+        width: 280px;
+    }
+}
+
+@media (max-width: 768px) {
+    .workflow-toolbar {
+        width: 50px;
+        padding: 12px 6px;
+    }
+
+    .workflow-tool-btn {
+        width: 38px;
+        height: 38px;
+    }
+
+    .workflow-tool-btn .material-symbols-outlined {
+        font-size: 18px;
+    }
+
+    .workflow-tool-btn span:last-child {
+        font-size: 9px;
+    }
+
+    .node-properties {
+        width: 250px;
+    }
 }

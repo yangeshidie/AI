@@ -16,13 +16,23 @@ export async function switchView(viewName) {
     // 激活菜单 (简单按顺序)
     const btns = document.querySelectorAll('.menu-item');
     if (viewName === 'chat') btns[0].classList.add('active');
-    if (viewName === 'agents') {
+    if (viewName === 'workflow') {
         btns[1].classList.add('active');
+        initWorkflowEditor();
+    }
+    if (viewName === 'agents') {
+        btns[2].classList.add('active');
         loadKBList();
     }
     if (viewName === 'library') {
-        btns[2].classList.add('active');
+        btns[3].classList.add('active');
         loadRootFiles();
     }
-    if (viewName === 'settings') btns[3].classList.add('active');
+    if (viewName === 'settings') btns[4].classList.add('active');
+}
+
+function initWorkflowEditor() {
+    if (!workflowEditor) {
+        workflowEditor = new WorkflowEditor('view-workflow');
+    }
 }
